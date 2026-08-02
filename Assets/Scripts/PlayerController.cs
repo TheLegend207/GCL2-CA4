@@ -72,7 +72,7 @@ public class PlayerController : MonoBehaviour
             walkSpeed = crouchSpeed; //Reduce speed
 
         }
-        else if (Input.GetKey(KeyCode.LeftShift))
+        else if (Input.GetKey(KeyCode.LeftShift)) //If the player is holding shift (and not crouching), then adjust to shift walk speed instead
         {
             walkSpeed = shiftWalkSpeed;
         }
