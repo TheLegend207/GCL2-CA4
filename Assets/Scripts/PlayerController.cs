@@ -10,7 +10,7 @@ public class PlayerController : MonoBehaviour
     public float walkSpeed = 6f;
     public float shiftWalkSpeed = 3f;
     public float jumpPower = 7f;
-    public float gravity = 10f;
+    public float gravity = 15f;
     public float lookSpeed = 2f;
     public float lookXLimit = 45f; //How far the player can look up and down
     public float defaultHeight = 2f;
