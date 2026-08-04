@@ -130,7 +130,6 @@ GameObject:
   - component: {fileID: 85980331}
   - component: {fileID: 85980330}
   - component: {fileID: 85980329}
-  - component: {fileID: 85980332}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -202,32 +201,6 @@ Transform:
   - {fileID: 330585546}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &85980332
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 85980328}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 11c6b89b10a0e6d478b7cc033b792cab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  pistolbullet: {fileID: 0}
-  smgbullet: {fileID: 0}
-  sniperbullet: {fileID: 0}
-  grenade: {fileID: 0}
-  shootPoint: {fileID: 0}
-  projectileSpeed: 0
-  pistol: 0
-  smg: 0
-  sniper: 0
-  grenadelauncher: 0
-  pistolammo: 0
-  sniperammo: 0
-  smgammo: 0
-  grenadeammo: 0
 --- !u!1 &168775008
 GameObject:
   m_ObjectHideFlags: 0
