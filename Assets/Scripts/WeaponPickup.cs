@@ -1,0 +1,45 @@
+using UnityEngine;
+
+public class WeaponPickup : MonoBehaviour
+{
+    [Header("Weapon type")]
+    public bool pistol;
+    public bool smg;
+    public bool sniper;
+    public bool grenadelauncher;
+
+    [Header("Ammo to give / max ammo for this weapon")]
+    public int ammoToAdd = 30;
+
+    [Header("Projectile & viewmodel")]
+    public GameObject bulletPrefab;
+    public float projectileSpeed = 50f;
+    public GameObject viewmodelPrefab;
+
+    [Header("Optional name")]
+    public string weaponName = "Weapon";
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            var pwm = other.GetComponent<PlayerWeaponManager>();
+            if (pwm != null)
+            {
+                pwm.NotifyWeaponInRange(this);
+            }
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            var pwm = other.GetComponent<PlayerWeaponManager>();
+            if (pwm != null)
+            {
+                pwm.NotifyWeaponOutOfRange(this);
+            }
+        }
+    }
+}
