@@ -106,6 +106,7 @@ public class PlayerController : MonoBehaviour
         if (currentHealth < 0)
         {
             currentHealth = 0;
+            Debug.Log($"{gameObject.name} has died.");
         }
 
         UpdateHealthUI();
