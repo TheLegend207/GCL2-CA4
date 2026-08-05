@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
@@ -16,7 +17,10 @@ public class PlayerController : MonoBehaviour
     public float defaultHeight = 2f;
     public float crouchHeight = 1f;
     public float crouchSpeed = 1.5f;
+    public int maxHealth = 100;
+    public int currentHealth;
 
+    public TMP_Text healthText; //To change health UI
     private Vector3 moveDirection = Vector3.zero; //Store player's movements
     private float rotationX = 0; //Store how far the player has looked up and down
     private CharacterController characterController; //Use character controller for height adjustments
@@ -28,6 +32,9 @@ public class PlayerController : MonoBehaviour
         characterController = GetComponent<CharacterController>(); //Gets a character controller attached to the object
         Cursor.lockState = CursorLockMode.Locked; //Locks cursor to the middle of the screen
         Cursor.visible = false; //Hide it
+        currentHealth = maxHealth;
+        UpdateHealthUI();
+
     }
 
     void Update()
@@ -91,7 +98,23 @@ public class PlayerController : MonoBehaviour
             rotationX = Mathf.Clamp(rotationX, -lookXLimit, lookXLimit); //Stop player from looking too far up/down
             transform.rotation *= Quaternion.Euler(0, Input.GetAxis("Mouse X") * lookSpeed, 0); //Rotate the player
         }
+    }
+    public void TakeDamage(int damage)
+    {
+        currentHealth -= damage;
 
-        
+        if (currentHealth < 0)
+        {
+            currentHealth = 0;
+        }
+
+        UpdateHealthUI();
+    } 
+
+    void UpdateHealthUI()
+    {
+        healthText.text = "+" + currentHealth;
     }
 }
+
+
