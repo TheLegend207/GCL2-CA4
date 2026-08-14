@@ -22,15 +22,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ae46b0cac7c22e2448a453ab2f9cbd42, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -5.3125
+      value: -27.77
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ae46b0cac7c22e2448a453ab2f9cbd42, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -4.39
+      value: -4.934
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ae46b0cac7c22e2448a453ab2f9cbd42, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 1.4208
+      value: -0.86
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ae46b0cac7c22e2448a453ab2f9cbd42, type: 3}
       propertyPath: m_LocalRotation.w
@@ -62,8 +62,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: ae46b0cac7c22e2448a453ab2f9cbd42, type: 3}
       propertyPath: m_Name
-      value: SF_Zombie_07_LODs
+      value: Zombie_01
       objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: ae46b0cac7c22e2448a453ab2f9cbd42, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 7a9feec35abbc6641b807b2a7221441e, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -73,7 +77,10 @@ PrefabInstance:
       addedObject: {fileID: 4874500127376979847}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ae46b0cac7c22e2448a453ab2f9cbd42, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7525612403064265534}
+      addedObject: {fileID: 5372666718281705192}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ae46b0cac7c22e2448a453ab2f9cbd42, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 730082656552396804}
   m_SourcePrefab: {fileID: 100100000, guid: ae46b0cac7c22e2448a453ab2f9cbd42, type: 3}
 --- !u!1 &3404826258356987182 stripped
 GameObject:
@@ -105,10 +112,32 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 112
   m_CollisionDetection: 0
---- !u!65 &7525612403064265534
-BoxCollider:
+--- !u!195 &5372666718281705192
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3404826258356987182}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.32
+  m_Speed: 4.5
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 200
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 1.79
+  m_BaseOffset: 0.1
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
+--- !u!136 &730082656552396804
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -125,6 +154,8 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1.7435033, z: 0.39349172}
-  m_Center: {x: -7.399751e-12, y: 0.96225756, z: -0.0011176768}
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Height: 1.7818662
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.88101864, z: 0}
