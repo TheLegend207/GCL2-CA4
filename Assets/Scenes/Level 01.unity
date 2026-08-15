@@ -630,7 +630,7 @@ GameObject:
   - component: {fileID: 16531537}
   - component: {fileID: 16531536}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: Cube of instant death and destruction
   m_TagString: Bullet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2685,10 +2685,10 @@ MonoBehaviour:
   playerCamera: {fileID: 330585545}
   walkSpeed: 15
   shiftWalkSpeed: 5
-  jumpPower: 7
+  jumpPower: 5
   gravity: 15
   lookSpeed: 2
-  lookXLimit: 45
+  lookXLimit: 60
   defaultHeight: 2
   crouchHeight: 1
   crouchSpeed: 2
@@ -4141,7 +4141,7 @@ Transform:
   m_GameObject: {fileID: 170867122}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.33599994, y: -0.71099997, z: 0.5020013}
+  m_LocalPosition: {x: -0.017, y: -0.71099997, z: 0.502}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12160,14 +12160,6 @@ PrefabInstance:
     m_TransformParent: {fileID: 1987349063}
     m_Modifications:
     - target: {fileID: 2488942269648025423, guid: 151cb7ced4ef38b4ab81b043230da594, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 1.4180043
-      objectReference: {fileID: 0}
-    - target: {fileID: 2488942269648025423, guid: 151cb7ced4ef38b4ab81b043230da594, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 1.4180043
-      objectReference: {fileID: 0}
-    - target: {fileID: 2488942269648025423, guid: 151cb7ced4ef38b4ab81b043230da594, type: 3}
       propertyPath: m_LocalPosition.x
       value: 111.41196
       objectReference: {fileID: 0}
@@ -12210,14 +12202,6 @@ PrefabInstance:
     - target: {fileID: 3008878862347234805, guid: 151cb7ced4ef38b4ab81b043230da594, type: 3}
       propertyPath: m_Name
       value: Zombie_02
-      objectReference: {fileID: 0}
-    - target: {fileID: 5151931583314295167, guid: 151cb7ced4ef38b4ab81b043230da594, type: 3}
-      propertyPath: fadeDuration
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5151931583314295167, guid: 151cb7ced4ef38b4ab81b043230da594, type: 3}
-      propertyPath: shrinkToScale
-      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 5151931583314295167, guid: 151cb7ced4ef38b4ab81b043230da594, type: 3}
       propertyPath: playerTransform
