@@ -81,6 +81,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ae46b0cac7c22e2448a453ab2f9cbd42, type: 3}
       insertIndex: -1
       addedObject: {fileID: 730082656552396804}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ae46b0cac7c22e2448a453ab2f9cbd42, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1972698691602825212}
   m_SourcePrefab: {fileID: 100100000, guid: ae46b0cac7c22e2448a453ab2f9cbd42, type: 3}
 --- !u!1 &3404826258356987182 stripped
 GameObject:
@@ -159,3 +162,43 @@ CapsuleCollider:
   m_Height: 1.7818662
   m_Direction: 1
   m_Center: {x: 0, y: 0.88101864, z: 0}
+--- !u!114 &1972698691602825212
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3404826258356987182}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01d21b48a02b02f4cb1341c59f0200ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  navAgent: {fileID: 5372666718281705192}
+  animator: {fileID: 8280891600453232110}
+  playerTransform: {fileID: 0}
+  attackPoint: {fileID: 0}
+  terrainLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  playerLayerMask:
+    serializedVersion: 2
+    m_Bits: 64
+  patrolSpeed: 2.5
+  chaseSpeed: 5
+  patrolRadius: 10
+  visionRange: 20
+  engagementRange: 10
+  meleeRange: 1.5
+  meleeDamage: 10
+  meleeHitDelay: 0.3
+  attackCooldown: 1
+  maxHealth: 100
+  deathAnimationLength: 2.97
+  fadeDuration: 2
+  shrinkToScale: 0.8
+--- !u!95 &8280891600453232110 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: ae46b0cac7c22e2448a453ab2f9cbd42, type: 3}
+  m_PrefabInstance: {fileID: 2558386126952290431}
+  m_PrefabAsset: {fileID: 0}
