@@ -29,7 +29,7 @@ public class PlayerShoot : MonoBehaviour
             Shoot();
         }
 
-        ChangeGun();
+//        ChangeGun();
     }
     void Shoot()
     {

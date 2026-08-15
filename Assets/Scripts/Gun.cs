@@ -18,10 +18,7 @@ public class Gun : MonoBehaviour
     public int grenadeammo;
     void Start()
     {
-        pistol = true;
-        smg = false;
-        sniper = false;
-        grenadelauncher = false;
+
     }
 
     // Update is called once per frame

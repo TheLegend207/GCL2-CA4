@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class BulletClass : MonoBehaviour
 {
-    public GameObject bullet; //unsure if needed
     public int damage;
     public float slow;
     public int pierce;
