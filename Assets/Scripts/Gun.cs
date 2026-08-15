@@ -1,5 +1,10 @@
 using UnityEngine;
 
+
+//DO NOT USE THIS, will be removed once guns and bullets are working properly and tested
+//this script has been deprecated, left for reference in case of bugs, playershoot and bulletclass are the new gun scripts
+//this script uses 4 separate prefabs each with their own tag and damage/mechanics are based on tags instead of a bulletclass
+
 public class Gun : MonoBehaviour
 {
     public GameObject pistolbullet;
