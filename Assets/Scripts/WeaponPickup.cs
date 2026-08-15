@@ -19,27 +19,31 @@ public class WeaponPickup : MonoBehaviour
     [Header("Optional name")]
     public string weaponName = "Weapon";
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            var pwm = other.GetComponent<PlayerWeaponManager>();
-            if (pwm != null)
-            {
-                pwm.NotifyWeaponInRange(this);
-            }
-        }
-    }
+   private void OnTriggerEnter(Collider other)
+{
+    if (!other.CompareTag("Player"))
+        return;
 
-    private void OnTriggerExit(Collider other)
+    PlayerWeaponManager manager =
+        other.GetComponent<PlayerWeaponManager>();
+
+    if (manager != null)
     {
-        if (other.CompareTag("Player"))
-        {
-            var pwm = other.GetComponent<PlayerWeaponManager>();
-            if (pwm != null)
-            {
-                pwm.NotifyWeaponOutOfRange(this);
-            }
-        }
+        manager.NotifyWeaponInRange(this);
     }
+}
+
+private void OnTriggerExit(Collider other)
+{
+    if (!other.CompareTag("Player"))
+        return;
+
+    PlayerWeaponManager manager =
+        other.GetComponent<PlayerWeaponManager>();
+
+    if (manager != null)
+    {
+        manager.NotifyWeaponOutOfRange(this);
+    }
+}
 }

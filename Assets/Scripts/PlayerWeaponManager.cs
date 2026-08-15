@@ -3,47 +3,75 @@ using System.Collections.Generic;
 
 public class PlayerWeaponManager : MonoBehaviour
 {
-    [Header("References")]
-    public Transform weaponHolder; // Where viewmodels are parented
+    [Header("Weapon display")]
+    public WeaponViewModelDisplay weaponViewModelDisplay;
 
-    // Overlap tracking for weapon pickups
-    private readonly List<WeaponPickup> weaponsInRange = new();
+    [Header("Optional: update existing weapon scripts")]
+    public bool updateWeaponScriptFlags = true;
+
+    private readonly List<WeaponPickup> weaponsInRange =
+        new List<WeaponPickup>();
+
     private WeaponPickup currentWeaponInRange;
 
-    // Viewmodel management
-    private GameObject currentViewmodel;
-
-    void Update()
+    private void Start()
     {
-        // Pickup / swap weapon when overlapping and pressing E
+        if (weaponViewModelDisplay == null)
+        {
+            weaponViewModelDisplay =
+                GetComponent<WeaponViewModelDisplay>();
+        }
+
+        // Display the starting model assigned to WeaponViewModelDisplay.
+        if (weaponViewModelDisplay != null &&
+            weaponViewModelDisplay.startingWeaponModel != null)
+        {
+            weaponViewModelDisplay.SetWeaponModel(
+                weaponViewModelDisplay.startingWeaponModel
+            );
+        }
+    }
+
+    private void Update()
+    {
         if (Input.GetKeyDown(KeyCode.E))
         {
             TryPickupWeapon();
         }
     }
 
-    /// <summary>
-    /// Called by WeaponPickup when the player enters its trigger.
-    /// </summary>
     public void NotifyWeaponInRange(WeaponPickup weapon)
     {
-        if (!weaponsInRange.Contains(weapon))
-            weaponsInRange.Add(weapon);
+        if (weapon == null)
+            return;
 
-        // Simple policy: most recently entered weapon is the one you can pick up
+        if (!weaponsInRange.Contains(weapon))
+        {
+            weaponsInRange.Add(weapon);
+        }
+
+        // Select the most recently entered weapon.
         currentWeaponInRange = weapon;
     }
 
-    /// <summary>
-    /// Called by WeaponPickup when the player exits its trigger.
-    /// </summary>
     public void NotifyWeaponOutOfRange(WeaponPickup weapon)
     {
+        if (weapon == null)
+            return;
+
         weaponsInRange.Remove(weapon);
 
         if (currentWeaponInRange == weapon)
         {
-            currentWeaponInRange = weaponsInRange.Count > 0 ? weaponsInRange[weaponsInRange.Count - 1] : null;
+            if (weaponsInRange.Count > 0)
+            {
+                currentWeaponInRange =
+                    weaponsInRange[weaponsInRange.Count - 1];
+            }
+            else
+            {
+                currentWeaponInRange = null;
+            }
         }
     }
 
@@ -52,59 +80,75 @@ public class PlayerWeaponManager : MonoBehaviour
         if (currentWeaponInRange == null)
             return;
 
-        PickupWeapon(currentWeaponInRange);
-        // The pickup destroys itself, so clear reference
+        WeaponPickup pickup = currentWeaponInRange;
+
+        if (weaponViewModelDisplay != null)
+        {
+            weaponViewModelDisplay.SetWeaponModel(
+                pickup.viewmodelPrefab
+            );
+        }
+
+        if (updateWeaponScriptFlags)
+        {
+            UpdateExistingWeaponScripts(pickup);
+        }
+
+        weaponsInRange.Remove(pickup);
         currentWeaponInRange = null;
-    }
 
-    /// <summary>
-    /// Handles picking up or swapping a weapon from a WeaponPickup.
-    /// This only handles viewmodel swapping and destroying the pickup.
-    /// Your PlayerShoot / Gun scripts keep controlling shooting and ammo.
-    /// </summary>
-    public void PickupWeapon(WeaponPickup pickup)
-    {
-        if (pickup == null)
-            return;
-
-        // Swap viewmodel
-        SwapViewmodel(pickup.viewmodelPrefab);
-
-        // Optional: if you want PlayerShoot/Gun to know which weapon is active,
-        // you can set flags here by accessing their references.
-        // Example:
-        // var playerShoot = GetComponent<PlayerShoot>();
-        // if (playerShoot != null)
-        // {
-        //     playerShoot.pistol = pickup.pistol;
-        //     playerShoot.smg = pickup.smg;
-        //     playerShoot.sniper = pickup.sniper;
-        //     playerShoot.grenadelauncher = pickup.grenadelauncher;
-        // }
-
-        // Remove the world pickup
         Destroy(pickup.gameObject);
     }
 
-    /// <summary>
-    /// Instantiates a new viewmodel under weaponHolder and destroys the old one.
-    /// </summary>
-    public void SwapViewmodel(GameObject newViewmodelPrefab)
+    private void UpdateExistingWeaponScripts(WeaponPickup pickup)
     {
-        if (currentViewmodel != null)
+        PlayerShoot playerShoot = GetComponent<PlayerShoot>();
+
+        if (playerShoot != null)
         {
-            Destroy(currentViewmodel);
-            currentViewmodel = null;
+            playerShoot.pistol = pickup.pistol;
+            playerShoot.smg = pickup.smg;
+            playerShoot.sniper = pickup.sniper;
+            playerShoot.grenadelauncher =
+                pickup.grenadelauncher;
+
+            playerShoot.bulletprefab =
+                pickup.bulletPrefab;
+
+            playerShoot.projectileSpeed =
+                pickup.projectileSpeed;
         }
 
-        if (newViewmodelPrefab != null && weaponHolder != null)
+        Gun gun = GetComponent<Gun>();
+
+        if (gun != null)
         {
-            currentViewmodel = Instantiate(
-                newViewmodelPrefab,
-                weaponHolder.position,
-                weaponHolder.rotation,
-                weaponHolder
-            );
+            gun.pistol = pickup.pistol;
+            gun.smg = pickup.smg;
+            gun.sniper = pickup.sniper;
+            gun.grenadelauncher =
+                pickup.grenadelauncher;
+
+            gun.projectileSpeed =
+                pickup.projectileSpeed;
+
+            // Assign the pickup's bullet prefab based on its type.
+            if (pickup.pistol)
+            {
+                gun.pistolbullet = pickup.bulletPrefab;
+            }
+            else if (pickup.smg)
+            {
+                gun.smgbullet = pickup.bulletPrefab;
+            }
+            else if (pickup.sniper)
+            {
+                gun.sniperbullet = pickup.bulletPrefab;
+            }
+            else if (pickup.grenadelauncher)
+            {
+                gun.grenade = pickup.bulletPrefab;
+            }
         }
     }
 }
