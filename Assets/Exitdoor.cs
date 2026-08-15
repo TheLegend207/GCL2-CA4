@@ -8,6 +8,10 @@ public class ExitDoor : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             SceneManager.LoadScene("Win screen");
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
     }
+
+
 }
