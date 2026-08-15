@@ -17,7 +17,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Look")]
     public float lookSpeed = 2f;
-    public float lookXLimit = 45f;
+    public float lookXLimit = 60f;
 
     [Header("Crouching")]
     public float defaultHeight = 2f;
