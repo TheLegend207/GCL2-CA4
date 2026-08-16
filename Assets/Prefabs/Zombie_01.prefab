@@ -195,7 +195,7 @@ MonoBehaviour:
   attackCooldown: 1
   maxHealth: 100
   deathAnimationLength: 2.97
-  fadeDuration: 2
+  fadeDuration: 1
   shrinkToScale: 0.8
 --- !u!95 &8280891600453232110 stripped
 Animator:
