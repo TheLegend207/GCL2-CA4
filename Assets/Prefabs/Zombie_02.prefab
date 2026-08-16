@@ -65,6 +65,10 @@ PrefabInstance:
       value: Zombie_02
       objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: bb0336371b707974ea6bcaaa7393dfb9, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: bb0336371b707974ea6bcaaa7393dfb9, type: 3}
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: 14e305ad75718454a876205781daf560, type: 2}
@@ -109,9 +113,6 @@ MonoBehaviour:
   animator: {fileID: 8388608627831663925}
   playerTransform: {fileID: 0}
   attackPoint: {fileID: 0}
-  terrainLayer:
-    serializedVersion: 2
-    m_Bits: 8
   playerLayerMask:
     serializedVersion: 2
     m_Bits: 64
@@ -127,9 +128,10 @@ MonoBehaviour:
   maxHealth: 100
   zombieAudio: {fileID: 8300000, guid: 6b201ca44dc5cdf4a97e90dcddcc39a3, type: 3}
   deathAudio: {fileID: 8300000, guid: 6842ad8d499156c4c89165a5674c3a17, type: 3}
-  zombieAudioVolume: 1
-  deathAudioVolume: 1
+  zombieAudioVolume: 0.178
+  deathAudioVolume: 0.5
   audioMaxDistance: 20
+  deathAnimationDuration: 2.5
 --- !u!195 &7654764430011843404
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -222,7 +224,7 @@ AudioSource:
   Spatialize: 0
   SpatializePostEffects: 0
   Priority: 128
-  DopplerLevel: 1
+  DopplerLevel: 0.73
   MinDistance: 1
   MaxDistance: 500
   Pan2D: 0

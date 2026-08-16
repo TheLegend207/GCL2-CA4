@@ -1367,6 +1367,75 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &845262731
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 9759c18e0e8c79f44a9ef9acc676075a, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 19.11384
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9759c18e0e8c79f44a9ef9acc676075a, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 19.11384
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9759c18e0e8c79f44a9ef9acc676075a, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 19.11384
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9759c18e0e8c79f44a9ef9acc676075a, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 25.7
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9759c18e0e8c79f44a9ef9acc676075a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -2.1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9759c18e0e8c79f44a9ef9acc676075a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -10.6
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9759c18e0e8c79f44a9ef9acc676075a, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.66080785
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9759c18e0e8c79f44a9ef9acc676075a, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.25802466
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9759c18e0e8c79f44a9ef9acc676075a, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.65653473
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9759c18e0e8c79f44a9ef9acc676075a, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.25635618
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9759c18e0e8c79f44a9ef9acc676075a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 42.658
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9759c18e0e8c79f44a9ef9acc676075a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -89.628
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9759c18e0e8c79f44a9ef9acc676075a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9759c18e0e8c79f44a9ef9acc676075a, type: 3}
+      propertyPath: m_Name
+      value: SF_Zombie_10_LODs
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 9759c18e0e8c79f44a9ef9acc676075a, type: 3}
 --- !u!1001 &893868488
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2170,6 +2239,7 @@ GameObject:
   - component: {fileID: 1272557593}
   - component: {fileID: 1272557597}
   - component: {fileID: 1272557598}
+  - component: {fileID: 1272557599}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -2374,6 +2444,28 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!95 &1272557599
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1272557592}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: b5f1e3fdce7f1a44c9d44db381cb282c, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &1505339024
 GameObject:
   m_ObjectHideFlags: 0
@@ -3351,3 +3443,4 @@ SceneRoots:
   - {fileID: 745469643}
   - {fileID: 1529091244}
   - {fileID: 1745511417}
+  - {fileID: 845262731}
