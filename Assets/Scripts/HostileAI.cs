@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
 
+[RequireComponent(typeof(AudioSource))]
 public class HostileAI : MonoBehaviour
 {
     [Header("References")]
@@ -32,14 +33,30 @@ public class HostileAI : MonoBehaviour
     [Header("Health")]
     [SerializeField] private float maxHealth = 100f;
 
-    [Header("Death Effects")]
-    [SerializeField] private float deathAnimationLength = 2.97f;
-    [SerializeField] private float fadeDuration = 2f;
-    [SerializeField] private float shrinkToScale = 0.8f;
+    [Header("Audio")]
+    [Tooltip("The looping sound the zombie makes while alive.")]
+    [SerializeField] private AudioClip zombieAudio;
+
+    [Tooltip("The sound played when the zombie dies.")]
+    [SerializeField] private AudioClip deathAudio;
+
+    [Tooltip("Volume of the normal zombie sound.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float zombieAudioVolume = 1f;
+
+    [Tooltip("Volume of the death sound.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float deathAudioVolume = 1f;
+
+    [Tooltip("How far away the zombie's sound can be heard.")]
+    [SerializeField] private float audioMaxDistance = 20f;
+
+    private AudioSource audioSource;
 
     private float currentHealth;
     private bool isDead;
     private bool isOnAttackCooldown;
+    private bool destroyCalled;
 
     private Vector3 currentPatrolPoint;
     private bool hasPatrolPoint;
@@ -47,13 +64,16 @@ public class HostileAI : MonoBehaviour
     private bool isPlayerVisible;
     private bool isPlayerInRange;
 
-    private Renderer[] renderers;
-    private Vector3 originalScale;
+    // --------------------------------------------------
+    // AWAKE
+    // --------------------------------------------------
 
     private void Awake()
     {
         currentHealth = maxHealth;
-        originalScale = transform.localScale;
+
+        // Get references automatically if they haven't
+        // been assigned in the Inspector.
 
         if (navAgent == null)
             navAgent = GetComponent<NavMeshAgent>();
@@ -64,6 +84,7 @@ public class HostileAI : MonoBehaviour
         if (playerTransform == null)
         {
             GameObject player = GameObject.Find("Player");
+
             if (player != null)
                 playerTransform = player.transform;
         }
@@ -71,21 +92,29 @@ public class HostileAI : MonoBehaviour
         if (attackPoint == null)
             attackPoint = transform;
 
-        renderers = GetComponentsInChildren<Renderer>();
+        // Get AudioSource.
+        audioSource = GetComponent<AudioSource>();
 
-        // Give every zombie its own material instance.
-        foreach (Renderer r in renderers)
-        {
-            Material[] mats = r.materials;
-
-            for (int i = 0; i < mats.Length; i++)
-            {
-                mats[i] = new Material(mats[i]);
-            }
-
-            r.materials = mats;
-        }
+        // Configure the AudioSource.
+        audioSource.playOnAwake = false;
+        audioSource.loop = true;
+        audioSource.spatialBlend = 1f;
+        audioSource.maxDistance = audioMaxDistance;
+        audioSource.rolloffMode = AudioRolloffMode.Linear;
     }
+
+    // --------------------------------------------------
+    // START
+    // --------------------------------------------------
+
+    private void Start()
+    {
+        PlayZombieAudio();
+    }
+
+    // --------------------------------------------------
+    // UPDATE
+    // --------------------------------------------------
 
     private void Update()
     {
@@ -96,11 +125,53 @@ public class HostileAI : MonoBehaviour
         UpdateBehaviourState();
     }
 
+    // --------------------------------------------------
+    // NORMAL ZOMBIE AUDIO
+    // --------------------------------------------------
+
+    private void PlayZombieAudio()
+    {
+        if (zombieAudio == null)
+        {
+            Debug.LogWarning(
+                $"Zombie '{gameObject.name}' has no zombie audio assigned."
+            );
+
+            return;
+        }
+
+        audioSource.clip = zombieAudio;
+        audioSource.volume = zombieAudioVolume;
+        audioSource.loop = true;
+
+        if (!audioSource.isPlaying)
+        {
+            audioSource.Play();
+        }
+    }
+
+    // --------------------------------------------------
+    // PLAYER DETECTION
+    // --------------------------------------------------
+
     private void DetectPlayer()
     {
-        isPlayerVisible = Physics.CheckSphere(transform.position, visionRange, playerLayerMask);
-        isPlayerInRange = Physics.CheckSphere(transform.position, engagementRange, playerLayerMask);
+        isPlayerVisible = Physics.CheckSphere(
+            transform.position,
+            visionRange,
+            playerLayerMask
+        );
+
+        isPlayerInRange = Physics.CheckSphere(
+            transform.position,
+            engagementRange,
+            playerLayerMask
+        );
     }
+
+    // --------------------------------------------------
+    // BEHAVIOUR
+    // --------------------------------------------------
 
     private void UpdateBehaviourState()
     {
@@ -118,8 +189,16 @@ public class HostileAI : MonoBehaviour
         }
     }
 
+    // --------------------------------------------------
+    // PATROL
+    // --------------------------------------------------
+
     private void Patrol()
     {
+        if (navAgent == null || !navAgent.enabled)
+            return;
+
+        navAgent.isStopped = false;
         navAgent.speed = patrolSpeed;
 
         if (!hasPatrolPoint)
@@ -128,86 +207,185 @@ public class HostileAI : MonoBehaviour
         if (hasPatrolPoint)
             navAgent.SetDestination(currentPatrolPoint);
 
-        if (Vector3.Distance(transform.position, currentPatrolPoint) < 1f)
+        if (Vector3.Distance(
+                transform.position,
+                currentPatrolPoint) < 1f)
+        {
             hasPatrolPoint = false;
+        }
     }
+
+    // --------------------------------------------------
+    // FIND PATROL POINT
+    // --------------------------------------------------
 
     private void FindPatrolPoint()
     {
-        float randomX = Random.Range(-patrolRadius, patrolRadius);
-        float randomZ = Random.Range(-patrolRadius, patrolRadius);
+        float randomX = Random.Range(
+            -patrolRadius,
+            patrolRadius
+        );
+
+        float randomZ = Random.Range(
+            -patrolRadius,
+            patrolRadius
+        );
 
         Vector3 point = new Vector3(
             transform.position.x + randomX,
             transform.position.y,
-            transform.position.z + randomZ);
+            transform.position.z + randomZ
+        );
 
-        if (Physics.Raycast(point + Vector3.up, Vector3.down, 5f, terrainLayer))
+        if (Physics.Raycast(
+                point,
+                Vector3.down,
+                2f,
+                terrainLayer))
         {
             currentPatrolPoint = point;
             hasPatrolPoint = true;
         }
     }
 
+    // --------------------------------------------------
+    // CHASE
+    // --------------------------------------------------
+
     private void Chase()
     {
+        if (navAgent == null || !navAgent.enabled)
+            return;
+
+        navAgent.isStopped = false;
+
+        // Zombie becomes faster when it sees the player.
         navAgent.speed = chaseSpeed;
 
         if (playerTransform != null)
-            navAgent.SetDestination(playerTransform.position);
+        {
+            navAgent.SetDestination(
+                playerTransform.position
+            );
+        }
     }
+
+    // --------------------------------------------------
+    // ATTACK
+    // --------------------------------------------------
 
     private void Attack()
     {
         if (playerTransform == null)
             return;
 
-        float distance = Vector3.Distance(transform.position, playerTransform.position);
+        if (navAgent == null || !navAgent.enabled)
+            return;
+
+        float distance = Vector3.Distance(
+            transform.position,
+            playerTransform.position
+        );
 
         if (distance > meleeRange)
         {
+            navAgent.isStopped = false;
             navAgent.speed = chaseSpeed;
-            navAgent.SetDestination(playerTransform.position);
+
+            navAgent.SetDestination(
+                playerTransform.position
+            );
         }
         else
         {
             navAgent.isStopped = true;
 
-            Vector3 lookDirection = playerTransform.position - transform.position;
-            lookDirection.y = 0;
+            Vector3 lookDirection =
+                playerTransform.position -
+                transform.position;
+
+            lookDirection.y = 0f;
 
             if (lookDirection != Vector3.zero)
-                transform.rotation = Quaternion.LookRotation(lookDirection);
+            {
+                transform.rotation =
+                    Quaternion.LookRotation(lookDirection);
+            }
 
             if (!isOnAttackCooldown)
-                StartCoroutine(MeleeAttackRoutine());
+            {
+                StartCoroutine(
+                    MeleeAttackRoutine()
+                );
+            }
         }
     }
+
+    // --------------------------------------------------
+    // MELEE ATTACK
+    // --------------------------------------------------
 
     private IEnumerator MeleeAttackRoutine()
     {
         isOnAttackCooldown = true;
 
-        animator.SetTrigger("Attack");
-
-        yield return new WaitForSeconds(meleeHitDelay);
-
-        Collider[] hits = Physics.OverlapSphere(
-            attackPoint.position,
-            meleeRange,
-            playerLayerMask);
-
-        foreach (Collider hit in hits)
+        if (animator != null)
         {
-            Debug.Log($"Hit {hit.name} for {meleeDamage} damage.");
-            // Add player damage here
+            animator.SetTrigger("Attack");
         }
 
-        yield return new WaitForSeconds(attackCooldown - meleeHitDelay);
+        yield return new WaitForSeconds(
+            meleeHitDelay
+        );
 
-        navAgent.isStopped = false;
-        isOnAttackCooldown = false;
+        if (isDead)
+            yield break;
+
+        if (attackPoint != null)
+        {
+            Collider[] hits = Physics.OverlapSphere(
+                attackPoint.position,
+                meleeRange,
+                playerLayerMask
+            );
+
+            foreach (Collider hit in hits)
+            {
+                Debug.Log(
+                    $"Hit {hit.name} for {meleeDamage} damage."
+                );
+
+                // Add your player's damage function here
+                // if you want the zombie attack to actually
+                // damage the player.
+            }
+        }
+
+        float remainingCooldown =
+            attackCooldown - meleeHitDelay;
+
+        if (remainingCooldown > 0f)
+        {
+            yield return new WaitForSeconds(
+                remainingCooldown
+            );
+        }
+
+        if (!isDead)
+        {
+            if (navAgent != null &&
+                navAgent.enabled)
+            {
+                navAgent.isStopped = false;
+            }
+
+            isOnAttackCooldown = false;
+        }
     }
+
+    // --------------------------------------------------
+    // TAKE DAMAGE
+    // --------------------------------------------------
 
     public void TakeDamage(float damage)
     {
@@ -216,66 +394,164 @@ public class HostileAI : MonoBehaviour
 
         currentHealth -= damage;
 
-        Debug.Log($"{gameObject.name} HP: {currentHealth}");
+        Debug.Log(
+            $"{gameObject.name} HP: {currentHealth}"
+        );
 
-        if (currentHealth <= 0)
+        if (currentHealth <= 0f)
+        {
+            currentHealth = 0f;
             Die();
+        }
     }
+
+    // --------------------------------------------------
+    // DEATH
+    // --------------------------------------------------
 
     private void Die()
     {
+        if (isDead)
+            return;
+
         isDead = true;
 
         StopAllCoroutines();
 
-        navAgent.isStopped = true;
-        navAgent.velocity = Vector3.zero;
-        navAgent.updatePosition = false;
-        navAgent.updateRotation = false;
+        // ----------------------------------------------
+        // STOP NAVMESH
+        // ----------------------------------------------
 
-        foreach (Collider col in GetComponents<Collider>())
+        if (navAgent != null &&
+            navAgent.enabled)
+        {
+            navAgent.isStopped = true;
+            navAgent.velocity = Vector3.zero;
+
+            // Stop NavMeshAgent from moving the transform.
+            navAgent.updatePosition = false;
+            navAgent.updateRotation = false;
+        }
+
+        // ----------------------------------------------
+        // DISABLE COLLIDERS
+        // ----------------------------------------------
+
+        Collider[] colliders =
+            GetComponents<Collider>();
+
+        foreach (Collider col in colliders)
+        {
             col.enabled = false;
+        }
 
-        animator.SetTrigger("Die");
+        // ----------------------------------------------
+        // STOP NORMAL ZOMBIE AUDIO
+        // ----------------------------------------------
 
-        StartCoroutine(FadeAndDestroy());
+        if (audioSource != null)
+        {
+            audioSource.Stop();
+            audioSource.loop = false;
+        }
+
+        // ----------------------------------------------
+        // PLAY DEATH AUDIO
+        // ----------------------------------------------
+
+        if (deathAudio != null)
+        {
+            audioSource.volume = deathAudioVolume;
+
+            audioSource.PlayOneShot(
+                deathAudio
+            );
+        }
+        else
+        {
+            Debug.LogWarning(
+                $"Zombie '{gameObject.name}' has no death audio assigned."
+            );
+        }
+
+        // ----------------------------------------------
+        // PLAY DEATH ANIMATION
+        // ----------------------------------------------
+
+        if (animator != null)
+        {
+            animator.SetTrigger("Die");
+        }
+        else
+        {
+            // If there is somehow no Animator,
+            // destroy the zombie after the audio.
+            StartCoroutine(
+                DestroyAfterAudio()
+            );
+        }
     }
 
-    private IEnumerator FadeAndDestroy()
+    // --------------------------------------------------
+    // ANIMATION EVENT
+    // --------------------------------------------------
+    //
+    // Put an Animation Event on the LAST FRAME
+    // of your Death animation.
+    //
+    // Function:
+    // DestroyZombie
+    //
+    // --------------------------------------------------
+
+    public void DestroyZombie()
     {
-        yield return new WaitForSeconds(deathAnimationLength);
+        if (destroyCalled)
+            return;
 
-        float timer = 0f;
+        destroyCalled = true;
 
-        while (timer < fadeDuration)
+        // Disable NavMeshAgent.
+        if (navAgent != null)
         {
-            timer += Time.deltaTime;
+            navAgent.enabled = false;
+        }
 
-            float t = timer / fadeDuration;
+        // If the death sound is still playing,
+        // wait for it before destroying the zombie.
+        if (audioSource != null &&
+            audioSource.isPlaying)
+        {
+            StartCoroutine(
+                DestroyAfterAudio()
+            );
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
 
-            float alpha = Mathf.Lerp(1f, 0f, t);
+    // --------------------------------------------------
+    // WAIT FOR DEATH AUDIO
+    // --------------------------------------------------
 
-            foreach (Renderer renderer in renderers)
-            {
-                foreach (Material mat in renderer.materials)
-                {
-                    if (mat.HasProperty("_BaseColor"))
-                    {
-                        Color c = mat.GetColor("_BaseColor");
-                        c.a = alpha;
-                        mat.SetColor("_BaseColor", c);
-                    }
-                }
-            }
-
-            float scale = Mathf.Lerp(1f, shrinkToScale, t);
-            transform.localScale = originalScale * scale;
-
-            yield return null;
+    private IEnumerator DestroyAfterAudio()
+    {
+        if (audioSource != null &&
+            audioSource.isPlaying)
+        {
+            yield return new WaitWhile(
+                () => audioSource.isPlaying
+            );
         }
 
         Destroy(gameObject);
     }
+
+    // --------------------------------------------------
+    // BULLET HIT
+    // --------------------------------------------------
 
     private void OnTriggerEnter(Collider other)
     {
@@ -284,22 +560,41 @@ public class HostileAI : MonoBehaviour
 
         if (other.CompareTag("Bullet"))
         {
-            TakeDamage(100f);
+            // Every bullet does 30 damage.
+            TakeDamage(30f);
+
             Destroy(other.gameObject);
         }
     }
 
+    // --------------------------------------------------
+    // GIZMOS
+    // --------------------------------------------------
+
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, visionRange);
+
+        Gizmos.DrawWireSphere(
+            transform.position,
+            visionRange
+        );
 
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, engagementRange);
+
+        Gizmos.DrawWireSphere(
+            transform.position,
+            engagementRange
+        );
 
         Gizmos.color = Color.magenta;
 
         if (attackPoint != null)
-            Gizmos.DrawWireSphere(attackPoint.position, meleeRange);
+        {
+            Gizmos.DrawWireSphere(
+                attackPoint.position,
+                meleeRange
+            );
+        }
     }
 }
