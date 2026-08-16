@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 public class PlayerWeaponManager : MonoBehaviour
 {
-    [Header("Weapon display")]
+    [Header("References")]
     public WeaponViewModelDisplay weaponViewModelDisplay;
 
-    [Header("Optional: update existing weapon scripts")]
-    public bool updateWeaponScriptFlags = true;
+    [Header("Pickup settings")]
+    public KeyCode pickupKey = KeyCode.E;
 
     private readonly List<WeaponPickup> weaponsInRange =
         new List<WeaponPickup>();
@@ -21,23 +21,16 @@ public class PlayerWeaponManager : MonoBehaviour
             weaponViewModelDisplay =
                 GetComponent<WeaponViewModelDisplay>();
         }
-
-        // Display the starting model assigned to WeaponViewModelDisplay.
-        if (weaponViewModelDisplay != null &&
-            weaponViewModelDisplay.startingWeaponModel != null)
-        {
-            weaponViewModelDisplay.SetWeaponModel(
-                weaponViewModelDisplay.startingWeaponModel
-            );
-        }
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.E))
+        if (Input.GetKeyDown(pickupKey))
         {
             TryPickupWeapon();
         }
+
+        RemoveInvalidPickups();
     }
 
     public void NotifyWeaponInRange(WeaponPickup weapon)
@@ -50,8 +43,7 @@ public class PlayerWeaponManager : MonoBehaviour
             weaponsInRange.Add(weapon);
         }
 
-        // Select the most recently entered weapon.
-        currentWeaponInRange = weapon;
+        currentWeaponInRange = GetClosestWeapon();
     }
 
     public void NotifyWeaponOutOfRange(WeaponPickup weapon)
@@ -63,92 +55,113 @@ public class PlayerWeaponManager : MonoBehaviour
 
         if (currentWeaponInRange == weapon)
         {
-            if (weaponsInRange.Count > 0)
-            {
-                currentWeaponInRange =
-                    weaponsInRange[weaponsInRange.Count - 1];
-            }
-            else
-            {
-                currentWeaponInRange = null;
-            }
+            currentWeaponInRange = GetClosestWeapon();
         }
     }
 
     private void TryPickupWeapon()
+{
+    if (currentWeaponInRange == null)
+        return;
+
+    WeaponPickup pickup = currentWeaponInRange;
+
+    if (weaponViewModelDisplay == null)
     {
-        if (currentWeaponInRange == null)
-            return;
-
-        WeaponPickup pickup = currentWeaponInRange;
-
-        if (weaponViewModelDisplay != null)
-        {
-            weaponViewModelDisplay.SetWeaponModel(
-                pickup.viewmodelPrefab
-            );
-        }
-
-        if (updateWeaponScriptFlags)
-        {
-            UpdateExistingWeaponScripts(pickup);
-        }
-
-        weaponsInRange.Remove(pickup);
-        currentWeaponInRange = null;
-
-        Destroy(pickup.gameObject);
+        Debug.LogError(
+            "PlayerWeaponManager: Weapon View Model Display is not assigned."
+        );
+        return;
     }
 
-    private void UpdateExistingWeaponScripts(WeaponPickup pickup)
+    if (pickup.viewmodelPrefab == null)
     {
-        PlayerShoot playerShoot = GetComponent<PlayerShoot>();
+        Debug.LogError(
+            "WeaponPickup: Viewmodel Prefab is not assigned."
+        );
+        return;
+    }
 
-        if (playerShoot != null)
+    weaponViewModelDisplay.SetWeaponModel(
+        pickup.viewmodelPrefab
+    );
+
+    UpdatePlayerShoot(pickup);
+
+    weaponsInRange.Remove(pickup);
+    currentWeaponInRange = null;
+
+    Destroy(pickup.gameObject);
+}
+
+    private void UpdatePlayerShoot(WeaponPickup pickup)
+    {
+        PlayerShoot playerShoot =
+            GetComponent<PlayerShoot>();
+
+        if (playerShoot == null)
         {
-            playerShoot.pistol = pickup.pistol;
-            playerShoot.smg = pickup.smg;
-            playerShoot.sniper = pickup.sniper;
-            playerShoot.grenadelauncher =
-                pickup.grenadelauncher;
+            Debug.LogWarning(
+                "PlayerWeaponManager: PlayerShoot was not found on the player."
+            );
+            return;
+        }
 
+        playerShoot.pistol = pickup.pistol;
+        playerShoot.smg = pickup.smg;
+        playerShoot.sniper = pickup.sniper;
+        playerShoot.grenadelauncher =
+            pickup.grenadelauncher;
+
+        if (pickup.bulletPrefab != null)
+        {
             playerShoot.bulletprefab =
                 pickup.bulletPrefab;
-
-            playerShoot.projectileSpeed =
-                pickup.projectileSpeed;
         }
 
-        Gun gun = GetComponent<Gun>();
+        playerShoot.projectileSpeed =
+            pickup.projectileSpeed;
 
-        if (gun != null)
+        Debug.Log("PlayerShoot updated to weapon: " + pickup.name);
+    }
+
+    private WeaponPickup GetClosestWeapon()
+    {
+        WeaponPickup closestWeapon = null;
+        float closestDistance = Mathf.Infinity;
+
+        foreach (WeaponPickup weapon in weaponsInRange)
         {
-            gun.pistol = pickup.pistol;
-            gun.smg = pickup.smg;
-            gun.sniper = pickup.sniper;
-            gun.grenadelauncher =
-                pickup.grenadelauncher;
+            if (weapon == null)
+                continue;
 
-            gun.projectileSpeed =
-                pickup.projectileSpeed;
+            float distance =
+                Vector3.Distance(transform.position, weapon.transform.position);
 
-            // Assign the pickup's bullet prefab based on its type.
-            if (pickup.pistol)
+            if (distance < closestDistance)
             {
-                gun.pistolbullet = pickup.bulletPrefab;
-            }
-            else if (pickup.smg)
-            {
-                gun.smgbullet = pickup.bulletPrefab;
-            }
-            else if (pickup.sniper)
-            {
-                gun.sniperbullet = pickup.bulletPrefab;
-            }
-            else if (pickup.grenadelauncher)
-            {
-                gun.grenade = pickup.bulletPrefab;
+                closestDistance = distance;
+                closestWeapon = weapon;
             }
         }
+
+        return closestWeapon;
+    }
+
+    private void RemoveInvalidPickups()
+    {
+        weaponsInRange.RemoveAll(weapon => weapon == null);
+
+        if (currentWeaponInRange == null ||
+            !weaponsInRange.Contains(currentWeaponInRange))
+        {
+            currentWeaponInRange = GetClosestWeapon();
+        }
+    }
+
+    public bool HasWeaponInRange()
+    {
+        RemoveInvalidPickups();
+        return currentWeaponInRange != null;
     }
 }
