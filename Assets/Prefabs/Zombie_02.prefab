@@ -117,7 +117,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   patrolSpeed: 2.5
-  chaseSpeed: 5
+  chaseSpeed: 9
   patrolRadius: 10
   visionRange: 20
   engagementRange: 10
@@ -132,6 +132,8 @@ MonoBehaviour:
   deathAudioVolume: 0.5
   audioMaxDistance: 20
   deathAnimationDuration: 2.5
+  fadeDuration: 2
+  deathRiseAmount: 0.5
 --- !u!195 &7654764430011843404
 NavMeshAgent:
   m_ObjectHideFlags: 0

@@ -181,14 +181,11 @@ MonoBehaviour:
   animator: {fileID: 8280891600453232110}
   playerTransform: {fileID: 0}
   attackPoint: {fileID: 0}
-  terrainLayer:
-    serializedVersion: 2
-    m_Bits: 8
   playerLayerMask:
     serializedVersion: 2
     m_Bits: 64
   patrolSpeed: 2.5
-  chaseSpeed: 5
+  chaseSpeed: 9
   patrolRadius: 10
   visionRange: 20
   engagementRange: 10
@@ -202,6 +199,9 @@ MonoBehaviour:
   zombieAudioVolume: 1
   deathAudioVolume: 1
   audioMaxDistance: 20
+  deathAnimationDuration: 2.5
+  fadeDuration: 2
+  deathRiseAmount: 0.5
 --- !u!82 &1463660563407923068
 AudioSource:
   m_ObjectHideFlags: 0
