@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+[RequireComponent(typeof(AudioSource))]
 public class PlayerWeaponManager : MonoBehaviour
 {
     [Header("References")]
@@ -9,10 +10,25 @@ public class PlayerWeaponManager : MonoBehaviour
     [Header("Pickup settings")]
     public KeyCode pickupKey = KeyCode.E;
 
+    [Header("Weapon swap sound")]
+    public AudioClip weaponSwapSound;
+
+    [Range(0f, 1f)]
+    public float weaponSwapVolume = 1f;
+
     private readonly List<WeaponPickup> weaponsInRange =
         new List<WeaponPickup>();
 
     private WeaponPickup currentWeaponInRange;
+    private AudioSource audioSource;
+
+    private void Awake()
+    {
+        audioSource = GetComponent<AudioSource>();
+
+        // Prevent the swap sound from playing automatically.
+        audioSource.playOnAwake = false;
+    }
 
     private void Start()
     {
@@ -20,6 +36,14 @@ public class PlayerWeaponManager : MonoBehaviour
         {
             weaponViewModelDisplay =
                 GetComponent<WeaponViewModelDisplay>();
+        }
+
+        if (weaponViewModelDisplay == null)
+        {
+            Debug.LogWarning(
+                "PlayerWeaponManager: WeaponViewModelDisplay " +
+                "is not assigned."
+            );
         }
     }
 
@@ -36,7 +60,9 @@ public class PlayerWeaponManager : MonoBehaviour
     public void NotifyWeaponInRange(WeaponPickup weapon)
     {
         if (weapon == null)
+        {
             return;
+        }
 
         if (!weaponsInRange.Contains(weapon))
         {
@@ -49,7 +75,9 @@ public class PlayerWeaponManager : MonoBehaviour
     public void NotifyWeaponOutOfRange(WeaponPickup weapon)
     {
         if (weapon == null)
+        {
             return;
+        }
 
         weaponsInRange.Remove(weapon);
 
@@ -60,39 +88,49 @@ public class PlayerWeaponManager : MonoBehaviour
     }
 
     private void TryPickupWeapon()
-{
-    if (currentWeaponInRange == null)
-        return;
-
-    WeaponPickup pickup = currentWeaponInRange;
-
-    if (weaponViewModelDisplay == null)
     {
-        Debug.LogError(
-            "PlayerWeaponManager: Weapon View Model Display is not assigned."
+        RemoveInvalidPickups();
+
+        if (currentWeaponInRange == null)
+        {
+            Debug.Log("No weapon is currently in pickup range.");
+            return;
+        }
+
+        WeaponPickup pickup = currentWeaponInRange;
+
+        if (pickup.viewmodelPrefab == null)
+        {
+            Debug.LogWarning(
+                "WeaponPickup has no viewmodel prefab assigned."
+            );
+            return;
+        }
+
+        if (weaponViewModelDisplay == null)
+        {
+            Debug.LogWarning(
+                "WeaponViewModelDisplay is missing."
+            );
+            return;
+        }
+
+        // Change the visible first-person weapon.
+        weaponViewModelDisplay.SetWeaponModel(
+            pickup.viewmodelPrefab
         );
-        return;
+
+        // Update the existing PlayerShoot script.
+        UpdatePlayerShoot(pickup);
+
+        // Play the swap sound after the swap succeeds.
+        PlayWeaponSwapSound();
+
+        weaponsInRange.Remove(pickup);
+        currentWeaponInRange = GetClosestWeapon();
+
+        Destroy(pickup.gameObject);
     }
-
-    if (pickup.viewmodelPrefab == null)
-    {
-        Debug.LogError(
-            "WeaponPickup: Viewmodel Prefab is not assigned."
-        );
-        return;
-    }
-
-    weaponViewModelDisplay.SetWeaponModel(
-        pickup.viewmodelPrefab
-    );
-
-    UpdatePlayerShoot(pickup);
-
-    weaponsInRange.Remove(pickup);
-    currentWeaponInRange = null;
-
-    Destroy(pickup.gameObject);
-}
 
     private void UpdatePlayerShoot(WeaponPickup pickup)
     {
@@ -102,27 +140,35 @@ public class PlayerWeaponManager : MonoBehaviour
         if (playerShoot == null)
         {
             Debug.LogWarning(
-                "PlayerWeaponManager: PlayerShoot was not found on the player."
+                "PlayerWeaponManager: PlayerShoot was not found."
             );
             return;
         }
 
-        playerShoot.pistol = pickup.pistol;
-        playerShoot.smg = pickup.smg;
-        playerShoot.sniper = pickup.sniper;
-        playerShoot.grenadelauncher =
-            pickup.grenadelauncher;
+        playerShoot.SetWeaponType(
+            pickup.pistol,
+            pickup.smg,
+            pickup.sniper,
+            pickup.grenadelauncher,
+            pickup.bulletPrefab,
+            pickup.projectileSpeed
+        );
+    }
 
-        if (pickup.bulletPrefab != null)
+    private void PlayWeaponSwapSound()
+    {
+        if (weaponSwapSound == null)
         {
-            playerShoot.bulletprefab =
-                pickup.bulletPrefab;
+            Debug.LogWarning(
+                "PlayerWeaponManager: Weapon swap sound is not assigned."
+            );
+            return;
         }
 
-        playerShoot.projectileSpeed =
-            pickup.projectileSpeed;
-
-        Debug.Log("PlayerShoot updated to weapon: " + pickup.name);
+        audioSource.PlayOneShot(
+            weaponSwapSound,
+            weaponSwapVolume
+        );
     }
 
     private WeaponPickup GetClosestWeapon()
@@ -133,10 +179,14 @@ public class PlayerWeaponManager : MonoBehaviour
         foreach (WeaponPickup weapon in weaponsInRange)
         {
             if (weapon == null)
+            {
                 continue;
+            }
 
-            float distance =
-                Vector3.Distance(transform.position, weapon.transform.position);
+            float distance = Vector3.Distance(
+                transform.position,
+                weapon.transform.position
+            );
 
             if (distance < closestDistance)
             {
@@ -150,7 +200,9 @@ public class PlayerWeaponManager : MonoBehaviour
 
     private void RemoveInvalidPickups()
     {
-        weaponsInRange.RemoveAll(weapon => weapon == null);
+        weaponsInRange.RemoveAll(
+            weapon => weapon == null
+        );
 
         if (currentWeaponInRange == null ||
             !weaponsInRange.Contains(currentWeaponInRange))

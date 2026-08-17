@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(AudioSource))]
 public class PlayerShoot : MonoBehaviour
 {
     [Header("Existing references")]
@@ -26,10 +27,24 @@ public class PlayerShoot : MonoBehaviour
     [Header("SMG settings")]
     public float smgRoundsPerSecond = 12f;
 
+    [Header("Shooting sound")]
+    public AudioClip shootingSound;
+    [Range(0f, 1f)]
+    public float shootingVolume = 1f;
+
     [Header("Optional")]
     public bool infiniteAmmo = false;
 
     private float nextShotTime;
+    private AudioSource audioSource;
+
+    private void Awake()
+    {
+        audioSource = GetComponent<AudioSource>();
+
+        // Prevent the sound from playing automatically on scene start.
+        audioSource.playOnAwake = false;
+    }
 
     private void Start()
     {
@@ -66,7 +81,7 @@ public class PlayerShoot : MonoBehaviour
 
     private void HandleSMGFire()
     {
-        // GetButton remains true while the Shoot button is held.
+        // Continues firing while the Shoot button is held.
         if (Input.GetButton("Shoot"))
         {
             TryShoot();
@@ -77,13 +92,17 @@ public class PlayerShoot : MonoBehaviour
     {
         if (shootPoint == null)
         {
-            Debug.LogWarning("PlayerShoot: Shoot Point is not assigned.");
+            Debug.LogWarning(
+                "PlayerShoot: Shoot Point is not assigned."
+            );
             return;
         }
 
         if (bulletprefab == null)
         {
-            Debug.LogWarning("PlayerShoot: Bullet Prefab is not assigned.");
+            Debug.LogWarning(
+                "PlayerShoot: Bullet Prefab is not assigned."
+            );
             return;
         }
 
@@ -99,6 +118,8 @@ public class PlayerShoot : MonoBehaviour
 
         Shoot();
 
+        PlayShootingSound();
+
         if (!infiniteAmmo)
         {
             ReduceCurrentAmmo();
@@ -106,12 +127,13 @@ public class PlayerShoot : MonoBehaviour
 
         if (IsSMG())
         {
-            nextShotTime = Time.time + (1f / smgRoundsPerSecond);
+            nextShotTime =
+                Time.time + (1f / smgRoundsPerSecond);
         }
         else
         {
-            // Small delay prevents accidental repeated shots.
-            nextShotTime = Time.time + 0.15f;
+            nextShotTime =
+                Time.time + 0.15f;
         }
     }
 
@@ -123,7 +145,8 @@ public class PlayerShoot : MonoBehaviour
             shootPoint.rotation
         );
 
-        Rigidbody rb = projectile.GetComponent<Rigidbody>();
+        Rigidbody rb =
+            projectile.GetComponent<Rigidbody>();
 
         if (rb != null)
         {
@@ -138,6 +161,19 @@ public class PlayerShoot : MonoBehaviour
         }
     }
 
+    private void PlayShootingSound()
+    {
+        if (shootingSound == null)
+        {
+            return;
+        }
+
+        audioSource.PlayOneShot(
+            shootingSound,
+            shootingVolume
+        );
+    }
+
     private bool IsSMG()
     {
         return smg &&
@@ -149,16 +185,24 @@ public class PlayerShoot : MonoBehaviour
     private int GetCurrentAmmo()
     {
         if (pistol)
+        {
             return pistolammo;
+        }
 
         if (smg)
+        {
             return smgammo;
+        }
 
         if (sniper)
+        {
             return sniperammo;
+        }
 
         if (grenadelauncher)
+        {
             return grenadeammo;
+        }
 
         return 0;
     }
@@ -167,19 +211,23 @@ public class PlayerShoot : MonoBehaviour
     {
         if (pistol)
         {
-            pistolammo = Mathf.Max(0, pistolammo - 1);
+            pistolammo =
+                Mathf.Max(0, pistolammo - 1);
         }
         else if (smg)
         {
-            smgammo = Mathf.Max(0, smgammo - 1);
+            smgammo =
+                Mathf.Max(0, smgammo - 1);
         }
         else if (sniper)
         {
-            sniperammo = Mathf.Max(0, sniperammo - 1);
+            sniperammo =
+                Mathf.Max(0, sniperammo - 1);
         }
         else if (grenadelauncher)
         {
-            grenadeammo = Mathf.Max(0, grenadeammo - 1);
+            grenadeammo =
+                Mathf.Max(0, grenadeammo - 1);
         }
     }
 
