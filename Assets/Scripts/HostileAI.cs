@@ -356,9 +356,12 @@ public class HostileAI : MonoBehaviour
 
             foreach (Collider hit in hits)
             {
-                Debug.Log(
-                    $"Hit {hit.name} for {meleeDamage} damage."
-                );
+                PlayerController player = hit.GetComponent<PlayerController>();
+
+                if (player != null)
+                {
+                    player.TakeDamage((int)meleeDamage);
+                }
             }
         }
 

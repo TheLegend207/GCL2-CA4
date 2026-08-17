@@ -1,15 +1,17 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.VisualScripting;
+using System;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
-    [Header("Player References")]
     public Camera playerCamera;
 
-    [Header("Movement")]
+    // Most of these are pretty self-explainotory
     public float walkSpeed = 15f;
     public float shiftWalkSpeed = 3f;
     public float jumpPower = 7f;
@@ -17,37 +19,33 @@ public class PlayerController : MonoBehaviour
     public float currentSpeed;
     public int speedBoost = 0;
 
-    [Header("Look")]
     public float lookSpeed = 2f;
-    public float lookXLimit = 60f;
-
-    [Header("Crouching")]
+    public float lookXLimit = 60f; // Prevent player from rotating camera too far up/down
     public float defaultHeight = 2f;
     public float crouchHeight = 1f;
     public float crouchSpeed = 1.5f;
-
-    [Header("Health")]
     public int maxHealth = 100;
     public int currentHealth;
 
-    [Header("UI")]
-    public TMP_Text healthText;
+    public TMP_Text healthText; // To change health UI
+    public UnityEngine.UI.Image healthBar;
 
-    private Vector3 moveDirection = Vector3.zero;
-    private float rotationX = 0f;
+    private Vector3 moveDirection = Vector3.zero; // Store player's movements
+    private float rotationX = 0f; // Store how far the player has look up/down
 
-    private CharacterController characterController;
+    private CharacterController characterController; // Use character controller for height adjustments
 
-    private bool canMove = true;
+    private bool canMove = true; // Ref to allow player to move
+    private bool isDead = false;
 
 
     private void Start()
     {
         speedBoost = 0;
-        characterController = GetComponent<CharacterController>();
+        characterController = GetComponent<CharacterController>(); // Gets a character controller attached to player
 
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked; // Lock cursor in the middle of screen
+        Cursor.visible = false; // Hides it
 
         currentHealth = maxHealth;
 
@@ -62,30 +60,22 @@ public class PlayerController : MonoBehaviour
 
     private void HandleMovement()
     {
-        // --------------------------------------------------
-        // GET MOVEMENT INPUT
-        // --------------------------------------------------
-
+        // When changing directions, key inputs will also change to that direction
         float inputVertical = Input.GetAxis("Vertical");
         float inputHorizontal = Input.GetAxis("Horizontal");
 
         Vector3 forward = transform.TransformDirection(Vector3.forward);
         Vector3 right = transform.TransformDirection(Vector3.right);
 
-        Vector3 movement = (forward * inputVertical) + (right * inputHorizontal);
+        Vector3 movement = (forward * inputVertical) + (right * inputHorizontal); // Allow diagonal movement
 
-        // Prevent diagonal movement from being faster.
+        // Prevent diagonal movement from being faster
         if (movement.magnitude > 1f)
         {
             movement.Normalize();
         }
 
-        // --------------------------------------------------
-        // DETERMINE CURRENT MOVEMENT SPEED
-        // --------------------------------------------------
-
-
-
+        // To determine player movement speed
         if (!canMove)
         {
             currentSpeed = 0f;
@@ -97,22 +87,20 @@ public class PlayerController : MonoBehaviour
         }
         else if (Input.GetKey(KeyCode.LeftShift))
         {
-            // Slow walking
+            // Shift-walk
             currentSpeed = shiftWalkSpeed + speedBoost;
         }
         else
         {
-            // Normal walking
+            // Normal 
             currentSpeed = walkSpeed + speedBoost;
         }
 
-        // Apply horizontal movement.
+        // Movement direction and speed of player
         moveDirection.x = movement.x * currentSpeed;
         moveDirection.z = movement.z * currentSpeed;
 
-        // --------------------------------------------------
-        // JUMPING
-        // --------------------------------------------------
+        // Jumping
 
         if (Input.GetButton("Jump") &&
             canMove &&
@@ -121,14 +109,10 @@ public class PlayerController : MonoBehaviour
             moveDirection.y = jumpPower;
         }
 
-        // --------------------------------------------------
-        // GRAVITY
-        // --------------------------------------------------
+        // Gravity
 
         if (characterController.isGrounded)
         {
-            // Keep the player grounded instead of accumulating
-            // negative velocity.
             if (moveDirection.y < 0f)
             {
                 moveDirection.y = -2f;
@@ -139,9 +123,7 @@ public class PlayerController : MonoBehaviour
             moveDirection.y -= gravity * Time.deltaTime;
         }
 
-        // --------------------------------------------------
-        // CROUCHING
-        // --------------------------------------------------
+        // Crouching
 
         if (Input.GetKey(KeyCode.LeftControl) && canMove)
         {
@@ -160,10 +142,6 @@ public class PlayerController : MonoBehaviour
             );
         }
 
-        // --------------------------------------------------
-        // MOVE PLAYER
-        // --------------------------------------------------
-
         characterController.Move(moveDirection * Time.deltaTime);
     }
 
@@ -172,42 +150,33 @@ public class PlayerController : MonoBehaviour
         if (!canMove)
             return;
 
-        // Vertical camera movement.
+        // Vertical camera movement
         rotationX += -Input.GetAxis("Mouse Y") * lookSpeed;
 
-        // Clamp vertical looking.
-        rotationX = Mathf.Clamp(
-            rotationX,
-            -lookXLimit,
-            lookXLimit
-        );
+        // Clamp vertical rotation
+        rotationX = Mathf.Clamp(rotationX, -lookXLimit, lookXLimit);
 
-        // Apply vertical camera rotation.
-        playerCamera.transform.localRotation =
-            Quaternion.Euler(rotationX, 0f, 0f);
+        // Verticle camera rotation
+        playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0f, 0f);
 
-        // Horizontal player rotation.
-        transform.rotation *= Quaternion.Euler(
-            0f,
-            Input.GetAxis("Mouse X") * lookSpeed,
-            0f
-        );
+        // Horizontal player rotation
+        transform.rotation *= Quaternion.Euler(0f, Input.GetAxis("Mouse X") * lookSpeed, 0f);
     }
 
-    // --------------------------------------------------
-    // HEALTH
-    // --------------------------------------------------
-
+    // Health
     public void TakeDamage(int damage)
     {
+        if (isDead)
+        {
+            return;
+        }
+
         currentHealth -= damage;
 
         if (currentHealth < 0)
         {
             currentHealth = 0;
         }
-
-        Debug.Log($"{gameObject.name} HP: {currentHealth}");
 
         UpdateHealthUI();
 
@@ -219,11 +188,14 @@ public class PlayerController : MonoBehaviour
 
     private void Die()
     {
-        Debug.Log($"{gameObject.name} has died.");
+        if (isDead)
+        {
+            return;
+        }
 
+        isDead = true;
         canMove = false;
-
-        // Add your death behaviour here later.
+        FindFirstObjectByType<LevelManager>().PlayerDied();
     }
 
     private void UpdateHealthUI()
@@ -231,6 +203,33 @@ public class PlayerController : MonoBehaviour
         if (healthText != null)
         {
             healthText.text = "+" + currentHealth;
+        }
+
+        float healthPercentage = (float)currentHealth / maxHealth;
+        Color healthColor;
+
+        if (healthPercentage > 0.6f)
+        {
+            healthColor = Color.green;
+        }
+        else if (healthPercentage > 0.3f)
+        {
+            healthColor = Color.yellow;
+        }
+        else
+        {
+            healthColor = Color.red;
+        }
+
+        if (healthText != null)
+        {
+            healthText.color = healthColor;
+        }
+
+        if (healthBar != null)
+        {
+            healthBar.fillAmount = healthPercentage;
+            healthBar.color = healthColor;
         }
     }
 
