@@ -14,6 +14,8 @@ public class PlayerController : MonoBehaviour
     public float shiftWalkSpeed = 3f;
     public float jumpPower = 7f;
     public float gravity = 15f;
+    public float currentSpeed;
+    public int speedBoost = 0;
 
     [Header("Look")]
     public float lookSpeed = 2f;
@@ -38,8 +40,10 @@ public class PlayerController : MonoBehaviour
 
     private bool canMove = true;
 
+
     private void Start()
     {
+        speedBoost = 0;
         characterController = GetComponent<CharacterController>();
 
         Cursor.lockState = CursorLockMode.Locked;
@@ -80,7 +84,7 @@ public class PlayerController : MonoBehaviour
         // DETERMINE CURRENT MOVEMENT SPEED
         // --------------------------------------------------
 
-        float currentSpeed;
+
 
         if (!canMove)
         {
@@ -89,17 +93,17 @@ public class PlayerController : MonoBehaviour
         else if (Input.GetKey(KeyCode.LeftControl))
         {
             // Crouching
-            currentSpeed = crouchSpeed;
+            currentSpeed = crouchSpeed + speedBoost;
         }
         else if (Input.GetKey(KeyCode.LeftShift))
         {
             // Slow walking
-            currentSpeed = shiftWalkSpeed;
+            currentSpeed = shiftWalkSpeed + speedBoost;
         }
         else
         {
             // Normal walking
-            currentSpeed = walkSpeed;
+            currentSpeed = walkSpeed + speedBoost;
         }
 
         // Apply horizontal movement.
@@ -228,5 +232,25 @@ public class PlayerController : MonoBehaviour
         {
             healthText.text = "+" + currentHealth;
         }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+
+        if (other.CompareTag("SpeedBoost"))
+        {
+
+            StartCoroutine(SpeedBoost());
+            Destroy(other.gameObject);
+        }
+    }
+
+    IEnumerator SpeedBoost()
+    {
+        speedBoost = 7;
+        print("boost start");
+        yield return new WaitForSeconds(7f);
+        speedBoost = 0;
+        print("boost end");
     }
 }
