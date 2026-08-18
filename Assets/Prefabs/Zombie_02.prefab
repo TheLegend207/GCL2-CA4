@@ -132,8 +132,8 @@ MonoBehaviour:
   maxHealth: 100
   zombieAudio: {fileID: 8300000, guid: 6b201ca44dc5cdf4a97e90dcddcc39a3, type: 3}
   deathAudio: {fileID: 8300000, guid: 6842ad8d499156c4c89165a5674c3a17, type: 3}
-  zombieAudioVolume: 0.178
-  deathAudioVolume: 0.5
+  zombieAudioVolume: 0.81963855
+  deathAudioVolume: 0.8842934
   audioMaxDistance: 20
   deathAnimationDuration: 2.5
   fadeDuration: 2

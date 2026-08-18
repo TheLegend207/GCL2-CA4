@@ -3231,11 +3231,11 @@ MonoBehaviour:
   ammoTextFormat: '{0} / {1}'
   cooldownText: Reloading....
   shootingSound: {fileID: 8300000, guid: 4a6cb715224d545c7842d28bce38258f, type: 3}
-  shootingVolume: 0.7
+  shootingVolume: 0.58462626
   cooldownSound: {fileID: 8300000, guid: 205d6c7ac1a6546fca60f0408e66c10e, type: 3}
-  cooldownVolume: 1
+  cooldownVolume: 0.8428729
   GrenadeSound: {fileID: 8300000, guid: 4a6cb715224d545c7842d28bce38258f, type: 3}
-  grenadeVolume: 1
+  grenadeVolume: 0.67393196
   infiniteAmmo: 1
 --- !u!114 &85980334
 MonoBehaviour:
@@ -3252,7 +3252,7 @@ MonoBehaviour:
   weaponViewModelDisplay: {fileID: 0}
   pickupKey: 101
   weaponSwapSound: {fileID: 8300000, guid: 2bf7fd8d5e4a64c708a4e1c4b3c7ae67, type: 3}
-  weaponSwapVolume: 1
+  weaponSwapVolume: 0.9231739
 --- !u!82 &85980335
 AudioSource:
   m_ObjectHideFlags: 0
