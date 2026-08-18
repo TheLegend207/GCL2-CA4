@@ -14998,6 +14998,14 @@ PrefabInstance:
       propertyPath: playerTransform
       value: 
       objectReference: {fileID: 85980331}
+    - target: {fileID: 7654764430011843404, guid: 151cb7ced4ef38b4ab81b043230da594, type: 3}
+      propertyPath: m_Speed
+      value: 13
+      objectReference: {fileID: 0}
+    - target: {fileID: 7654764430011843404, guid: 151cb7ced4ef38b4ab81b043230da594, type: 3}
+      propertyPath: m_AngularSpeed
+      value: 5000
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

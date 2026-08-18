@@ -10,16 +10,21 @@ public class HostileAI : MonoBehaviour
     [SerializeField] private Transform playerTransform;
     [SerializeField] private Transform attackPoint;
     [SerializeField] private LayerMask playerLayerMask;
+
     [SerializeField] private float patrolSpeed = 2.5f;
-    [SerializeField] private float chaseSpeed = 5f;
+    [SerializeField] private float chaseSpeed = 9f;
     [SerializeField] private float patrolRadius = 10f;
+
     [SerializeField] private float visionRange = 20f;
     [SerializeField] private float engagementRange = 10f;
+
     [SerializeField] private float meleeRange = 1.5f;
     [SerializeField] private float meleeDamage = 10f;
     [SerializeField] private float meleeHitDelay = 0.3f;
     [SerializeField] private float attackCooldown = 1f;
+
     [SerializeField] private float maxHealth = 100f;
+
     [SerializeField] private AudioClip zombieAudio;
     [SerializeField] private AudioClip deathAudio;
 
@@ -33,6 +38,9 @@ public class HostileAI : MonoBehaviour
     [SerializeField] private float deathAnimationDuration = 2.5f;
     [SerializeField] private float fadeDuration = 2f;
     [SerializeField] private float deathRiseAmount = 0.5f;
+
+    // How quickly the zombie turns while chasing.
+    [SerializeField] private float chaseTurnSpeed = 720f;
 
     private AudioSource audioSource;
 
@@ -49,7 +57,6 @@ public class HostileAI : MonoBehaviour
     private bool isPlayerInRange;
 
     private Renderer[] zombieRenderers;
-
     private MaterialPropertyBlock propertyBlock;
 
     private int dmgtaken;
@@ -57,19 +64,21 @@ public class HostileAI : MonoBehaviour
 
     private void Awake()
     {
-        // Set up the zombie and its components.
         currentHealth = maxHealth;
 
         if (navAgent == null)
             navAgent = GetComponent<NavMeshAgent>();
 
-        // Make sure the agent can move normally.
         if (navAgent != null)
         {
             navAgent.enabled = true;
             navAgent.isStopped = false;
             navAgent.updatePosition = true;
             navAgent.updateRotation = true;
+
+            navAgent.angularSpeed = 720f;
+            navAgent.acceleration = 30f;
+            navAgent.autoBraking = false;
         }
 
         if (animator == null)
@@ -90,14 +99,10 @@ public class HostileAI : MonoBehaviour
 
         audioSource.playOnAwake = false;
         audioSource.loop = true;
-
-        // Make the zombie audio feel like it's coming from the world.
         audioSource.spatialBlend = 1f;
-
         audioSource.maxDistance = audioMaxDistance;
         audioSource.rolloffMode = AudioRolloffMode.Linear;
 
-        // Cache renderers so the death fade is cheap.
         zombieRenderers =
             GetComponentsInChildren<Renderer>();
 
@@ -152,7 +157,7 @@ public class HostileAI : MonoBehaviour
             return;
         }
 
-        // Check whether the player is close enough to react.
+        // Check if the player is nearby.
         isPlayerVisible =
             Physics.CheckSphere(
                 transform.position,
@@ -191,6 +196,7 @@ public class HostileAI : MonoBehaviour
             return;
 
         navAgent.isStopped = false;
+        navAgent.updateRotation = true;
         navAgent.speed = patrolSpeed;
 
         if (!hasPatrolPoint)
@@ -212,6 +218,7 @@ public class HostileAI : MonoBehaviour
         }
     }
 
+    // Find a random point nearby.
     private void FindPatrolPoint()
     {
         if (navAgent == null ||
@@ -247,7 +254,6 @@ public class HostileAI : MonoBehaviour
             }
         }
 
-
         NavMeshHit currentHit;
 
         if (NavMesh.SamplePosition(
@@ -271,12 +277,35 @@ public class HostileAI : MonoBehaviour
             return;
 
         navAgent.isStopped = false;
-        // ADDED SLOWDOWN EFFECT TO SPEED BELOW ------------
         navAgent.speed = chaseSpeed - slowdown;
+
+        // Let the script handle turning while chasing.
+        navAgent.updateRotation = false;
 
         navAgent.SetDestination(
             playerTransform.position
         );
+
+        Vector3 lookDirection =
+            playerTransform.position -
+            transform.position;
+
+        lookDirection.y = 0f;
+
+        if (lookDirection.sqrMagnitude > 0.01f)
+        {
+            Quaternion targetRotation =
+                Quaternion.LookRotation(
+                    lookDirection
+                );
+
+            transform.rotation =
+                Quaternion.RotateTowards(
+                    transform.rotation,
+                    targetRotation,
+                    chaseTurnSpeed * Time.deltaTime
+                );
+        }
     }
 
     private void Attack()
@@ -297,18 +326,43 @@ public class HostileAI : MonoBehaviour
         if (distance > meleeRange)
         {
             navAgent.isStopped = false;
-            // ADDED SLOWDOWN EFFECT TO SPEED BELOW ----------
             navAgent.speed = chaseSpeed - slowdown;
+
+            // Keep manual turning active while closing in.
+            navAgent.updateRotation = false;
 
             navAgent.SetDestination(
                 playerTransform.position
             );
 
+            Vector3 chaseDirection =
+                playerTransform.position -
+                transform.position;
+
+            chaseDirection.y = 0f;
+
+            if (chaseDirection.sqrMagnitude > 0.01f)
+            {
+                Quaternion targetRotation =
+                    Quaternion.LookRotation(
+                        chaseDirection
+                    );
+
+                transform.rotation =
+                    Quaternion.RotateTowards(
+                        transform.rotation,
+                        targetRotation,
+                        chaseTurnSpeed * Time.deltaTime
+                    );
+            }
+
             return;
         }
 
         navAgent.isStopped = true;
+        navAgent.updateRotation = false;
 
+        // Face the player before attacking.
         Vector3 lookDirection =
             playerTransform.position -
             transform.position;
@@ -333,7 +387,6 @@ public class HostileAI : MonoBehaviour
 
     private IEnumerator MeleeAttackRoutine()
     {
-        // Wait for the attack animation to reach the hit.
         isOnAttackCooldown = true;
 
         if (animator != null)
@@ -350,7 +403,6 @@ public class HostileAI : MonoBehaviour
 
         if (attackPoint != null)
         {
-            // Check who is actually inside the attack range.
             Collider[] hits =
                 Physics.OverlapSphere(
                     attackPoint.position,
@@ -360,11 +412,14 @@ public class HostileAI : MonoBehaviour
 
             foreach (Collider hit in hits)
             {
-                PlayerController player = hit.GetComponent<PlayerController>();
+                PlayerController player =
+                    hit.GetComponent<PlayerController>();
 
                 if (player != null)
                 {
-                    player.TakeDamage((int)meleeDamage);
+                    player.TakeDamage(
+                        (int)meleeDamage
+                    );
                 }
             }
         }
@@ -391,17 +446,24 @@ public class HostileAI : MonoBehaviour
             isOnAttackCooldown = false;
         }
     }
-    // ADDED AND TWEAKED DAMAGE FUNCTION -----------
+
     public void Hit()
     {
-        // Ignore damage after the zombie has died.
+        // Ignore damage after death.
         if (isDead)
             return;
-        BulletClass bulletclass = FindFirstObjectByType<BulletClass>();
+
+        BulletClass bulletclass =
+            FindFirstObjectByType<BulletClass>();
+
         dmgtaken = bulletclass.damage;
         slowdown = bulletclass.slow;
+
         currentHealth -= dmgtaken;
-        StartCoroutine(SlowedTimer());
+
+        StartCoroutine(
+            SlowedTimer()
+        );
 
         Debug.Log(
             $"{gameObject.name} HP: {currentHealth}"
@@ -414,19 +476,21 @@ public class HostileAI : MonoBehaviour
             Die();
         }
     }
+
     private IEnumerator SlowedTimer()
     {
         Debug.Log("Zombie is slowed.");
 
         yield return new WaitForSeconds(3f);
+
         slowdown = 0f;
 
         Debug.Log("Slow has ended.");
     }
-    // ADDED UNTIL HERE REMOVE WHEN UNDERSTOOD --------------------
+
     private void Die()
     {
-        // Stop everything before playing the death sequence.
+        // Stop everything when the zombie dies.
         if (isDead)
             return;
 
@@ -434,7 +498,6 @@ public class HostileAI : MonoBehaviour
 
         StopAllCoroutines();
 
-        // Stop the zombie from moving during its death.
         if (navAgent != null &&
             navAgent.enabled)
         {
@@ -477,7 +540,6 @@ public class HostileAI : MonoBehaviour
             animator.SetTrigger("Die");
         }
 
-        // Let the death animation finish before fading.
         StartCoroutine(
             DeathFadeRoutine()
         );
@@ -485,7 +547,6 @@ public class HostileAI : MonoBehaviour
 
     private IEnumerator DeathFadeRoutine()
     {
-
         yield return new WaitForSeconds(
             deathAnimationDuration
         );
@@ -493,12 +554,10 @@ public class HostileAI : MonoBehaviour
         Vector3 startPosition =
             transform.position;
 
-        // The small rise makes the fade feel less abrupt.
         Vector3 endPosition =
             startPosition +
             Vector3.up *
             deathRiseAmount;
-
 
         float elapsed = 0f;
 
@@ -519,7 +578,7 @@ public class HostileAI : MonoBehaviour
                     progress
                 );
 
-            // Fade the zombie out as it rises.
+            // Fade while the zombie rises.
             float alpha =
                 Mathf.Lerp(
                     1f,
@@ -527,9 +586,7 @@ public class HostileAI : MonoBehaviour
                     progress
                 );
 
-
             SetZombieAlpha(alpha);
-
 
             yield return null;
         }
@@ -546,25 +603,20 @@ public class HostileAI : MonoBehaviour
 
     private void SetZombieAlpha(float alpha)
     {
-        // Change transparency without creating new materials.
         if (zombieRenderers == null)
             return;
-
 
         foreach (Renderer rend in zombieRenderers)
         {
             if (rend == null)
                 continue;
 
-
             rend.GetPropertyBlock(
                 propertyBlock
             );
 
-            // URP uses _BaseColor for the material tint.
             Color baseColor =
                 Color.white;
-
 
             if (rend.sharedMaterial != null &&
                 rend.sharedMaterial.HasProperty(
@@ -576,15 +628,12 @@ public class HostileAI : MonoBehaviour
                     );
             }
 
-
             baseColor.a = alpha;
-
 
             propertyBlock.SetColor(
                 "_BaseColor",
                 baseColor
             );
-
 
             rend.SetPropertyBlock(
                 propertyBlock
@@ -594,10 +643,9 @@ public class HostileAI : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        //if zombie is dead, ignore
+        // Ignore bullets after death.
         if (isDead)
             return;
-
 
         if (other.CompareTag("Bullet"))
         {
@@ -607,7 +655,7 @@ public class HostileAI : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        // Show the zombie's detection and attack ranges in the editor.
+        // Show detection range.
         Gizmos.color =
             Color.yellow;
 
@@ -616,7 +664,7 @@ public class HostileAI : MonoBehaviour
             visionRange
         );
 
-
+        // Show engagement range.
         Gizmos.color =
             Color.red;
 
@@ -625,7 +673,7 @@ public class HostileAI : MonoBehaviour
             engagementRange
         );
 
-
+        // Show attack range.
         Gizmos.color =
             Color.magenta;
 
@@ -637,7 +685,7 @@ public class HostileAI : MonoBehaviour
             );
         }
 
-
+        // Show patrol range.
         Gizmos.color =
             Color.cyan;
 
