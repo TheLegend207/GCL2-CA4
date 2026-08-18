@@ -3231,7 +3231,7 @@ MonoBehaviour:
   ammoTextFormat: '{0} / {1}'
   cooldownText: Reloading....
   shootingSound: {fileID: 8300000, guid: 4a6cb715224d545c7842d28bce38258f, type: 3}
-  shootingVolume: 0.58462626
+  shootingVolume: 0.41555712
   cooldownSound: {fileID: 8300000, guid: 205d6c7ac1a6546fca60f0408e66c10e, type: 3}
   cooldownVolume: 0.8428729
   GrenadeSound: {fileID: 8300000, guid: 4a6cb715224d545c7842d28bce38258f, type: 3}
