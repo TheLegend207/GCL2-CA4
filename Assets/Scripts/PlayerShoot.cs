@@ -8,6 +8,7 @@ public class PlayerShoot : MonoBehaviour
     [Header("Existing references")]
     public BulletClass bulletclass;
     public GameObject bulletprefab;
+    public GameObject grenadeprefab;
 
     [Header("Weapon type")]
     public bool pistol;
@@ -20,7 +21,7 @@ public class PlayerShoot : MonoBehaviour
     public int pistolammo = 30;
     public int smgammo = 120;
     public int sniperammo = 30;
-    public int grenadeammo = 10;
+    public int grenadeammo = 5;
 
     [Header("Shooting")]
     public Transform shootPoint;
@@ -60,6 +61,12 @@ public class PlayerShoot : MonoBehaviour
     [Range(0f, 1f)]
     public float cooldownVolume = 1f;
 
+    [Header("grenade sound")]
+    public AudioClip GrenadeSound;
+
+    [Range(0f, 1f)]
+    public float grenadeVolume = 1f;
+
     [Header("Optional")]
     public bool infiniteAmmo = false;
 
@@ -68,6 +75,8 @@ public class PlayerShoot : MonoBehaviour
     private bool isCoolingDown;
     private AudioSource audioSource;
     private Coroutine cooldownCoroutine;
+
+
 
     public bool IsCoolingDown
     {
@@ -87,6 +96,8 @@ public class PlayerShoot : MonoBehaviour
 
     private void Start()
     {
+        BulletClass Bulletclass = GetComponent<BulletClass>();
+
         if (!pistol &&
             !smg &&
             !sniper &&
@@ -174,9 +185,18 @@ public class PlayerShoot : MonoBehaviour
             BeginCooldown();
             return;
         }
+        // ADDED HERE TO BELOW LINE -----------------------------
+        UpdateBullet();
 
-        Shoot();
-        PlayShootingSound();
+        if (IsGL())
+        {
+            PlayGrenadeSound();
+        }
+        else
+        {
+            PlayShootingSound();
+        }
+        // -----------------------------------
 
         bulletsFiredSinceCooldown++;
 
@@ -184,7 +204,6 @@ public class PlayerShoot : MonoBehaviour
         {
             ReduceCurrentAmmo();
         }
-
         if (IsSMG())
         {
             if (smgRoundsPerSecond <= 0f)
@@ -195,12 +214,22 @@ public class PlayerShoot : MonoBehaviour
             nextShotTime =
                 Time.time + (1f / smgRoundsPerSecond);
         }
-        else
+        // ADDED HERE TO BELOW LINE------------------------------
+        if (IsPistol())
         {
             nextShotTime =
-                Time.time + 0.15f;
+                Time.time + 0.2f;
         }
-
+        if (IsSniper())
+        {
+            nextShotTime =
+               Time.time + 1f;
+        }
+        if (IsGL())
+        {
+            nextShotTime =
+                Time.time + 2f;
+        }
         UpdateAmmoUI();
 
         if (ReachedBulletLimit() &&
@@ -210,13 +239,48 @@ public class PlayerShoot : MonoBehaviour
         }
     }
 
-    private void Shoot()
+    private void UpdateBullet()
+    {
+        if (IsSMG())
+        {
+            projectileSpeed = 50f;
+            bulletclass.pierce = 0;
+            bulletclass.damage = 20;
+            bulletclass.slow = 1.5f;
+            ShootBullet();
+
+        }
+        if (IsPistol())
+        {
+            projectileSpeed = 50f;
+            bulletclass.pierce = 0;
+            bulletclass.damage = 40;
+            bulletclass.slow = 3f;
+            ShootBullet();
+        }
+        if (IsSniper())
+        {
+            projectileSpeed = 50f;
+            bulletclass.pierce = 2;
+            bulletclass.damage = 100;
+            bulletclass.slow = 2f;
+            ShootBullet();
+        }
+        if (IsGL())
+        {
+            projectileSpeed = 40f;
+            bulletclass.damage = 100;
+            bulletclass.pierce = 0;
+            ShootGrenade();
+        }
+
+    }
+    private void ShootBullet()
     {
         GameObject projectile = Instantiate(
             bulletprefab,
             shootPoint.position,
-            shootPoint.rotation
-        );
+            shootPoint.rotation);
 
         Rigidbody rb =
             projectile.GetComponent<Rigidbody>();
@@ -232,8 +296,31 @@ public class PlayerShoot : MonoBehaviour
                 "PlayerShoot: Bullet prefab has no Rigidbody."
             );
         }
-    }
 
+    }
+    private void ShootGrenade()
+    {
+        GameObject projectile2 = Instantiate(
+    grenadeprefab,
+    shootPoint.position,
+    shootPoint.rotation);
+
+        Rigidbody rb =
+            projectile2.GetComponent<Rigidbody>();
+
+        if (rb != null)
+        {
+            rb.linearVelocity =
+                shootPoint.forward * projectileSpeed;
+        }
+        else
+        {
+            Debug.LogWarning(
+                "PlayerShoot: Grenade prefab has no Rigidbody."
+            );
+        }
+    }
+    // ---------------------------------------------------------------------------------
     private bool IsSMG()
     {
         return smg &&
@@ -241,7 +328,27 @@ public class PlayerShoot : MonoBehaviour
                !sniper &&
                !grenadelauncher;
     }
-
+    private bool IsPistol()
+    {
+        return pistol &&
+               !smg &&
+               !sniper &&
+               !grenadelauncher;
+    }
+    private bool IsSniper()
+    {
+        return sniper &&
+               !pistol &&
+               !smg &&
+               !grenadelauncher;
+    }
+    private bool IsGL()
+    {
+        return grenadelauncher &&
+               !pistol &&
+               !sniper &&
+               !smg;
+    }
     private int GetCurrentAmmo()
     {
         if (pistol)
@@ -418,6 +525,19 @@ public class PlayerShoot : MonoBehaviour
     private void PlayShootingSound()
     {
         if (shootingSound == null)
+        {
+            return;
+        }
+
+        audioSource.PlayOneShot(
+            shootingSound,
+            shootingVolume
+        );
+    }
+
+    private void PlayGrenadeSound()
+    {
+        if (GrenadeSound == null)
         {
             return;
         }

@@ -51,6 +51,7 @@ public class PlayerController : MonoBehaviour
     private bool canMove = true;
     private bool isDead = false;
 
+
     private void Start()
     {
         speedBoost = 0;
@@ -202,6 +203,9 @@ public class PlayerController : MonoBehaviour
                 0f,
                 0f
             );
+
+
+
 
         transform.rotation *=
             Quaternion.Euler(

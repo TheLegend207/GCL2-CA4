@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Bullet
   - SpeedBoost
+  - Zombie
+  - Environment
   layers:
   - Default
   - TransparentFX

@@ -52,6 +52,9 @@ public class HostileAI : MonoBehaviour
 
     private MaterialPropertyBlock propertyBlock;
 
+    private int dmgtaken;
+    private float slowdown;
+
     private void Awake()
     {
         // Set up the zombie and its components.
@@ -268,8 +271,8 @@ public class HostileAI : MonoBehaviour
             return;
 
         navAgent.isStopped = false;
-
-        navAgent.speed = chaseSpeed;
+        // ADDED SLOWDOWN EFFECT TO SPEED BELOW ------------
+        navAgent.speed = chaseSpeed - slowdown;
 
         navAgent.SetDestination(
             playerTransform.position
@@ -294,7 +297,8 @@ public class HostileAI : MonoBehaviour
         if (distance > meleeRange)
         {
             navAgent.isStopped = false;
-            navAgent.speed = chaseSpeed;
+            // ADDED SLOWDOWN EFFECT TO SPEED BELOW ----------
+            navAgent.speed = chaseSpeed - slowdown;
 
             navAgent.SetDestination(
                 playerTransform.position
@@ -387,14 +391,17 @@ public class HostileAI : MonoBehaviour
             isOnAttackCooldown = false;
         }
     }
-
-    public void TakeDamage(float damage)
+    // ADDED AND TWEAKED DAMAGE FUNCTION -----------
+    public void Hit()
     {
         // Ignore damage after the zombie has died.
         if (isDead)
             return;
-
-        currentHealth -= damage;
+        BulletClass bulletclass = FindFirstObjectByType<BulletClass>();
+        dmgtaken = bulletclass.damage;
+        slowdown = bulletclass.slow;
+        currentHealth -= dmgtaken;
+        StartCoroutine(SlowedTimer());
 
         Debug.Log(
             $"{gameObject.name} HP: {currentHealth}"
@@ -407,7 +414,16 @@ public class HostileAI : MonoBehaviour
             Die();
         }
     }
+    private IEnumerator SlowedTimer()
+    {
+        Debug.Log("Zombie is slowed.");
 
+        yield return new WaitForSeconds(3f);
+        slowdown = 0f;
+
+        Debug.Log("Slow has ended.");
+    }
+    // ADDED UNTIL HERE REMOVE WHEN UNDERSTOOD --------------------
     private void Die()
     {
         // Stop everything before playing the death sequence.
@@ -576,21 +592,16 @@ public class HostileAI : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter(
-        Collider other)
+    private void OnTriggerEnter(Collider other)
     {
-        // Bullets deal a fixed amount of damage.
+        //if zombie is dead, ignore
         if (isDead)
             return;
 
 
         if (other.CompareTag("Bullet"))
         {
-            TakeDamage(30f);
-
-            Destroy(
-                other.gameObject
-            );
+            Hit();
         }
     }
 
