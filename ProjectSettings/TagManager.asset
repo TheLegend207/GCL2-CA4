@@ -8,6 +8,7 @@ TagManager:
   - SpeedBoost
   - Zombie
   - Environment
+  - Shove
   layers:
   - Default
   - TransparentFX

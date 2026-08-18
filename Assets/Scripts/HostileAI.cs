@@ -651,6 +651,21 @@ public class HostileAI : MonoBehaviour
         {
             Hit();
         }
+        if (other.CompareTag("Shove"))
+        {
+            StartCoroutine(Shoved());
+        }
+
+    }
+
+    IEnumerator Shoved()
+    {
+        slowdown = 10f;
+        isOnAttackCooldown = true;
+        yield return new WaitForSeconds(2f);
+        slowdown = 0f;
+        isOnAttackCooldown = false;
+        Debug.LogWarning("Zombie is shoved");
     }
 
     private void OnDrawGizmosSelected()

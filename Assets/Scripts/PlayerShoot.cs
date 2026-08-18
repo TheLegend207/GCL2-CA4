@@ -9,6 +9,7 @@ public class PlayerShoot : MonoBehaviour
     public BulletClass bulletclass;
     public GameObject bulletprefab;
     public GameObject grenadeprefab;
+    public GameObject shovehitbox;
 
     [Header("Weapon type")]
     public bool pistol;
@@ -43,6 +44,9 @@ public class PlayerShoot : MonoBehaviour
     public float cooldownDuration = 2f;
     public bool cooldownAutomatically = true;
     public KeyCode reloadKey = KeyCode.R;
+    public KeyCode shoveKey = KeyCode.Mouse1;
+    public bool shoveCooldown;
+    public float shoveCooldownTime = 1.5f;
 
     [Header("Ammo UI")]
     public TMP_Text ammoText;
@@ -132,6 +136,10 @@ public class PlayerShoot : MonoBehaviour
             {
                 HandleSingleShotFire();
             }
+        }
+        if (Input.GetKeyDown(shoveKey) && shoveCooldown == false)
+        {
+            StartCoroutine(Shove());
         }
 
         UpdateAmmoCounter();
@@ -244,7 +252,7 @@ public class PlayerShoot : MonoBehaviour
             ConfigureBullet(
                 damage: 20,
                 pierce: 0,
-                slow: 1.5f
+                slow: 2f
             );
 
             ShootBullet();
@@ -256,7 +264,7 @@ public class PlayerShoot : MonoBehaviour
             ConfigureBullet(
                 damage: 40,
                 pierce: 0,
-                slow: 3f
+                slow: 4.5f
             );
 
             ShootBullet();
@@ -268,7 +276,7 @@ public class PlayerShoot : MonoBehaviour
             ConfigureBullet(
                 damage: 100,
                 pierce: 2,
-                slow: 2f
+                slow: 3f
             );
 
             ShootBullet();
@@ -704,5 +712,14 @@ public class PlayerShoot : MonoBehaviour
     public void ForceCooldown()
     {
         BeginCooldown();
+    }
+    IEnumerator Shove()
+    {
+        shoveCooldown = true;
+        shovehitbox.SetActive(true);
+        yield return new WaitForSeconds(0.2f);
+        shovehitbox.SetActive(false);
+        yield return new WaitForSeconds(shoveCooldownTime);
+        shoveCooldown = false;
     }
 }
