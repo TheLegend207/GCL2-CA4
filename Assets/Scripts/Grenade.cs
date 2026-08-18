@@ -1,4 +1,5 @@
 using System.Collections;
+using Unity.Jobs;
 using UnityEngine;
 
 [RequireComponent(typeof(AudioSource))]
@@ -34,11 +35,11 @@ public class Grenade : MonoBehaviour
     {
         if (rb == null)
         {
-            rb = GetComponent<Rigidbody>();
+            rb = GetComponent<Rigidbody>(); //get rigidbody of grenade
         }
 
         audioSource =
-            GetComponent<AudioSource>();
+            GetComponent<AudioSource>(); //link audio source for explosion
 
         audioSource.playOnAwake = false;
 
@@ -54,7 +55,7 @@ public class Grenade : MonoBehaviour
         }
     }
 
-    private void Start()
+    private void Start() //set explosion and explosion sprite to false
     {
         if (explosion != null)
         {
@@ -67,7 +68,7 @@ public class Grenade : MonoBehaviour
         }
     }
 
-    private void LateUpdate()
+    private void LateUpdate() //return or reassign if any below variables are null
     {
         if (!hasExploded ||
             explosionSprite == null ||
@@ -95,7 +96,7 @@ public class Grenade : MonoBehaviour
             return;
         }
 
-        if (matchCameraRotation)
+        if (matchCameraRotation) //for explosion to match camera
         {
             explosionSprite.transform.rotation =
                 cameraTransform.rotation;
@@ -123,30 +124,30 @@ public class Grenade : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other) // when colliding with something else
     {
-        if (hasExploded)
+        if (hasExploded) //if exploded, retunr
         {
             return;
         }
 
         if (other.CompareTag("Environment") ||
-            other.CompareTag("Zombie"))
+            other.CompareTag("Zombie")) //if tag is envrionemtn or zombie, run explode function
         {
             StartCoroutine(Explode());
         }
     }
 
-    private IEnumerator Explode()
+    private IEnumerator Explode() //explode function
     {
         if (hasExploded)
         {
-            yield break;
+            yield break; //end if the grenade has already exploded
         }
 
         hasExploded = true;
 
-        PlayExplosionSound();
+        PlayExplosionSound(); //explosion sound
 
         if (rb != null)
         {
@@ -159,22 +160,22 @@ public class Grenade : MonoBehaviour
             rb.isKinematic = true;
         }
 
-        if (model != null)
+        if (model != null) //force model to be false and hidden
         {
             model.SetActive(false);
         }
 
-        if (explosion != null)
+        if (explosion != null) //force explosion to be true and appear
         {
             explosion.SetActive(true);
         }
-
-        if (explosionSprite != null)
+        
+        if (explosionSprite != null) //force explosion sprite to be true and appear
         {
             explosionSprite.SetActive(true);
         }
 
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.7f); //destory grenade after exploding
 
         Debug.Log(
             "Grenade destroyed on environment."
@@ -183,7 +184,7 @@ public class Grenade : MonoBehaviour
         Destroy(gameObject);
     }
 
-    private void PlayExplosionSound()
+    private void PlayExplosionSound() //exploding sound on grenade explosion
     {
         if (explosionSound == null)
         {

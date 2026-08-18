@@ -85,12 +85,12 @@ public class PlayerShoot : MonoBehaviour
     private AudioSource audioSource;
     private Coroutine cooldownCoroutine;
 
-    public bool IsCoolingDown
+    public bool IsCoolingDown // bool for if the gun is reloading
     {
         get { return isCoolingDown; }
     }
 
-    public int BulletsFiredSinceCooldown
+    public int BulletsFiredSinceCooldown // track bullets fired to calculate bullets left in 1 mag
     {
         get { return bulletsFiredSinceCooldown; }
     }
@@ -98,23 +98,23 @@ public class PlayerShoot : MonoBehaviour
     private void Awake()
     {
         audioSource =
-            GetComponent<AudioSource>();
+            GetComponent<AudioSource>(); //collect the audio from audio source
 
         audioSource.playOnAwake = false;
     }
 
     private void Start()
     {
-        if (!pistol &&
+        if (!pistol && //if al 4 guns are null
             !smg &&
             !sniper &&
             !grenadelauncher)
         {
-            pistol = true;
+            pistol = true; //set pistol as base gun
         }
 
-        UpdateAmmoCounter();
-        ResetBulletLimit();
+        UpdateAmmoCounter(); //update gun statistics and connect them to UI
+        ResetBulletLimit(); 
         UpdateAmmoUI();
     }
 
@@ -123,23 +123,23 @@ public class PlayerShoot : MonoBehaviour
         // Press R to manually reload/start the cooldown.
         if (Input.GetKeyDown(reloadKey))
         {
-            BeginCooldown();
+            BeginCooldown(); //begin reload
         }
 
-        if (!isCoolingDown)
+        if (!isCoolingDown) //if not on reload
         {
             if (IsSMG())
             {
-                HandleSMGFire();
+                HandleSMGFire(); //smg hold to fire 
             }
             else
             {
-                HandleSingleShotFire();
+                HandleSingleShotFire(); //click to fire once
             }
         }
-        if (Input.GetKeyDown(shoveKey) && shoveCooldown == false)
+        if (Input.GetKeyDown(shoveKey) && shoveCooldown == false) //if shove key is pressed and not on shove cooldown
         {
-            StartCoroutine(Shove());
+            StartCoroutine(Shove()); //shove
         }
 
         UpdateAmmoCounter();
@@ -148,7 +148,7 @@ public class PlayerShoot : MonoBehaviour
 
     private void HandleSingleShotFire()
     {
-        if (Input.GetButtonDown("Shoot"))
+        if (Input.GetButtonDown("Shoot")) //called once only when button is pressed down (down behind)
         {
             TryShoot();
         }
@@ -156,20 +156,20 @@ public class PlayerShoot : MonoBehaviour
 
     private void HandleSMGFire()
     {
-        if (Input.GetButton("Shoot"))
+        if (Input.GetButton("Shoot")) //continuously called when button is held (no down behind)
         {
             TryShoot();
         }
     }
 
-    private void TryShoot()
+    private void TryShoot() //attempt to shoot
     {
-        if (isCoolingDown)
+        if (isCoolingDown) //if on reload
         {
-            return;
+            return; 
         }
 
-        if (shootPoint == null)
+        if (shootPoint == null) //if no shootpoint is assigned
         {
             Debug.LogWarning(
                 "PlayerShoot: Shoot Point is not assigned."
@@ -177,9 +177,9 @@ public class PlayerShoot : MonoBehaviour
             return;
         }
 
-        if (IsGL())
+        if (IsGL()) //if current gun is GL
         {
-            if (grenadeprefab == null)
+            if (grenadeprefab == null) //no grenade prefab
             {
                 Debug.LogWarning(
                     "PlayerShoot: Grenade Prefab is not assigned."
@@ -187,15 +187,15 @@ public class PlayerShoot : MonoBehaviour
                 return;
             }
         }
-        else if (bulletprefab == null)
+        else if (bulletprefab == null) //if current gun uses bullet prefab
         {
             Debug.LogWarning(
                 "PlayerShoot: Bullet Prefab is not assigned."
             );
-            return;
+            return; //no bullet prefab
         }
 
-        if (Time.time < nextShotTime)
+        if (Time.time < nextShotTime) //if time passed is less than next shot time
         {
             return;
         }
@@ -203,25 +203,25 @@ public class PlayerShoot : MonoBehaviour
         if (!infiniteAmmo &&
             GetCurrentAmmo() <= 0)
         {
-            UpdateAmmoUI();
+            UpdateAmmoUI(); //update current ammo, UI, limit
             return;
         }
 
-        if (ReachedBulletLimit())
+        if (ReachedBulletLimit()) //when out of ammo
         {
-            BeginCooldown();
+            BeginCooldown(); //reload
             return;
         }
 
-        UpdateBullet();
+        UpdateBullet(); //updates bulletclass before firing
 
         if (IsGL())
         {
-            PlayGrenadeSound();
+            PlayGrenadeSound(); //grenade shooting sound
         }
         else
         {
-            PlayShootingSound();
+            PlayShootingSound(); //normal bullet sound
         }
 
         bulletsFiredSinceCooldown++;
@@ -245,7 +245,7 @@ public class PlayerShoot : MonoBehaviour
 
     private void UpdateBullet()
     {
-        if (IsSMG())
+        if (IsSMG()) //set configuration for smg
         {
             projectileSpeed = 50f;
 
@@ -257,7 +257,7 @@ public class PlayerShoot : MonoBehaviour
 
             ShootBullet();
         }
-        else if (IsPistol())
+        else if (IsPistol()) //set configuration for pistol
         {
             projectileSpeed = 50f;
 
@@ -267,21 +267,21 @@ public class PlayerShoot : MonoBehaviour
                 slow: 4.5f
             );
 
-            ShootBullet();
+            ShootBullet(); //shoot bullet prefab
         }
-        else if (IsSniper())
+        else if (IsSniper()) //set configuration for sniper
         {
             projectileSpeed = 50f;
 
             ConfigureBullet(
                 damage: 100,
-                pierce: 2,
+                pierce: 3,
                 slow: 3f
             );
 
             ShootBullet();
         }
-        else if (IsGL())
+        else if (IsGL()) //set configuration for GL
         {
             projectileSpeed = 40f;
 
@@ -291,17 +291,17 @@ public class PlayerShoot : MonoBehaviour
                 slow: 0f
             );
 
-            ShootGrenade();
+            ShootGrenade(); //shoot grenade prefab instead of bullet
         }
     }
 
-    private void ConfigureBullet(
+    private void ConfigureBullet( //how to configure bulletclass when referenced
         int damage,
         int pierce,
         float slow
     )
     {
-        if (bulletclass == null)
+        if (bulletclass == null) //no bulletclass assigned
         {
             Debug.LogWarning(
                 "PlayerShoot: BulletClass is not assigned."
@@ -314,7 +314,7 @@ public class PlayerShoot : MonoBehaviour
         bulletclass.slow = slow;
     }
 
-    private void ShootBullet()
+    private void ShootBullet() //shooting of the bullet
     {
         GameObject projectile =
             Instantiate(
@@ -324,7 +324,7 @@ public class PlayerShoot : MonoBehaviour
             );
 
         Rigidbody rb =
-            projectile.GetComponent<Rigidbody>();
+            projectile.GetComponent<Rigidbody>(); //get bullets rigidbody
 
         if (rb != null)
         {
@@ -332,7 +332,7 @@ public class PlayerShoot : MonoBehaviour
                 shootPoint.forward *
                 projectileSpeed;
         }
-        else
+        else //warning of no rigidbody
         {
             Debug.LogWarning(
                 "PlayerShoot: Bullet prefab has no Rigidbody."
@@ -340,7 +340,7 @@ public class PlayerShoot : MonoBehaviour
         }
     }
 
-    private void ShootGrenade()
+    private void ShootGrenade() //firing grenade instead of bullet prefab
     {
         GameObject projectile =
             Instantiate(
@@ -366,9 +366,9 @@ public class PlayerShoot : MonoBehaviour
         }
     }
 
-    private void SetNextShotTime()
+    private void SetNextShotTime() 
     {
-        if (IsSMG())
+        if (IsSMG()) //setting delay per shot for smg
         {
             float safeRoundsPerSecond =
                 Mathf.Max(
@@ -380,19 +380,19 @@ public class PlayerShoot : MonoBehaviour
                 Time.time +
                 (1f / safeRoundsPerSecond);
         }
-        else if (IsPistol())
+        else if (IsPistol()) //setting base delay per shot for pistol
         {
             nextShotTime =
                 Time.time +
                 pistolFireDelay;
         }
-        else if (IsSniper())
+        else if (IsSniper()) //base delay for sniper shots
         {
             nextShotTime =
                 Time.time +
                 sniperFireDelay;
         }
-        else if (IsGL())
+        else if (IsGL()) //base delay for grenade shots
         {
             nextShotTime =
                 Time.time +
@@ -400,7 +400,7 @@ public class PlayerShoot : MonoBehaviour
         }
     }
 
-    private bool IsSMG()
+    private bool IsSMG() //test if smg is currently equipped
     {
         return smg &&
                !pistol &&
@@ -408,7 +408,7 @@ public class PlayerShoot : MonoBehaviour
                !grenadelauncher;
     }
 
-    private bool IsPistol()
+    private bool IsPistol() //test if pistol is currently equipped
     {
         return pistol &&
                !smg &&
@@ -416,7 +416,7 @@ public class PlayerShoot : MonoBehaviour
                !grenadelauncher;
     }
 
-    private bool IsSniper()
+    private bool IsSniper() //test if sniper is currently equipped
     {
         return sniper &&
                !pistol &&
@@ -424,7 +424,7 @@ public class PlayerShoot : MonoBehaviour
                !grenadelauncher;
     }
 
-    private bool IsGL()
+    private bool IsGL() //test if GL is currently equipped
     {
         return grenadelauncher &&
                !pistol &&
@@ -432,7 +432,7 @@ public class PlayerShoot : MonoBehaviour
                !smg;
     }
 
-    private int GetCurrentAmmo()
+    private int GetCurrentAmmo() //update current ammo for each gun
     {
         if (IsPistol())
         {
@@ -457,7 +457,7 @@ public class PlayerShoot : MonoBehaviour
         return 0;
     }
 
-    private int GetCurrentBulletLimit()
+    private int GetCurrentBulletLimit() //update max ammo per mag for each gun
     {
         if (IsPistol())
         {
@@ -482,7 +482,7 @@ public class PlayerShoot : MonoBehaviour
         return 0;
     }
 
-    private bool ReachedBulletLimit()
+    private bool ReachedBulletLimit() //ran out of bullets
     {
         int currentLimit =
             GetCurrentBulletLimit();
@@ -496,7 +496,7 @@ public class PlayerShoot : MonoBehaviour
                currentLimit;
     }
 
-    private void BeginCooldown()
+    private void BeginCooldown() //reloading script
     {
         if (isCoolingDown)
         {
@@ -516,7 +516,7 @@ public class PlayerShoot : MonoBehaviour
             );
     }
 
-    private IEnumerator CooldownRoutine()
+    private IEnumerator CooldownRoutine() //coroutine for reloading
     {
         isCoolingDown = true;
 
@@ -542,14 +542,14 @@ public class PlayerShoot : MonoBehaviour
         UpdateAmmoUI();
     }
 
-    private void ResetBulletLimit()
+    private void ResetBulletLimit() //setting current ammo back to max ammo
     {
         bulletsFiredSinceCooldown = 0;
         isCoolingDown = false;
         nextShotTime = 0f;
     }
 
-    private void ReduceCurrentAmmo()
+    private void ReduceCurrentAmmo() //using up current ammo when shot from the gun
     {
         if (IsPistol())
         {
@@ -585,13 +585,13 @@ public class PlayerShoot : MonoBehaviour
         }
     }
 
-    private void UpdateAmmoCounter()
+    private void UpdateAmmoCounter() //update ammo
     {
         ammocounter =
             GetCurrentAmmo();
     }
 
-    private void UpdateAmmoUI()
+    private void UpdateAmmoUI() //update ammo ui on player screen
     {
         if (ammoText == null)
         {
@@ -620,7 +620,7 @@ public class PlayerShoot : MonoBehaviour
             );
     }
 
-    private void PlayShootingSound()
+    private void PlayShootingSound() //sound manager for firing guns
     {
         if (shootingSound == null)
         {
@@ -659,7 +659,7 @@ public class PlayerShoot : MonoBehaviour
         );
     }
 
-    public void SetWeaponType(
+    public void SetWeaponType( //linking new weapon to the base weapon
         bool newPistol,
         bool newSmg,
         bool newSniper,
@@ -709,11 +709,11 @@ public class PlayerShoot : MonoBehaviour
         UpdateAmmoUI();
     }
 
-    public void ForceCooldown()
+    public void ForceCooldown() //forced reload when 0 ammo
     {
         BeginCooldown();
     }
-    IEnumerator Shove()
+    IEnumerator Shove() //shoving script
     {
         shoveCooldown = true;
         shovehitbox.SetActive(true);

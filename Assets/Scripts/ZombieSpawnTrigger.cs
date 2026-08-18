@@ -58,34 +58,30 @@ public class ZombieSpawnTrigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // Only activate when the Player enters.
+        //activate when the player enters
         if (!other.CompareTag("Player"))
             return;
 
-        // Prevent the trigger from activating more than once.
+        // prevent the trigger from activating more than once
         if (spawnOnlyOnce && hasTriggered)
             return;
 
         hasTriggered = true;
 
-        // Play the warning audio.
         PlayHordeAudio();
 
-        // Show the warning text.
+        // Show the horde text
         if (hordeText != null)
         {
             StartCoroutine(FadeHordeText());
         }
 
-        // Spawn the zombies.
+        // Spawn the zombies
         SpawnZombies();
     }
 
-    // =========================================================
-    // AUDIO
-    // =========================================================
 
-    private void PlayHordeAudio()
+    private void PlayHordeAudio() //sound plaeyd when zombies horde spawn
     {
         if (hordeAudio == null)
         {
@@ -96,11 +92,9 @@ public class ZombieSpawnTrigger : MonoBehaviour
         audioSource.PlayOneShot(hordeAudio);
     }
 
-    // =========================================================
-    // TEXT FADE
-    // =========================================================
 
-    private IEnumerator FadeHordeText()
+
+    private IEnumerator FadeHordeText()     //message fades away
     {
         hordeText.gameObject.SetActive(true);
 
@@ -111,10 +105,7 @@ public class ZombieSpawnTrigger : MonoBehaviour
         textColor.a = 0f;
         hordeText.color = textColor;
 
-        // -----------------------------------------------------
-        // FADE IN
-        // -----------------------------------------------------
-
+        //zombies fade into existence
         float timer = 0f;
 
         while (timer < fadeInDuration)
@@ -131,23 +122,15 @@ public class ZombieSpawnTrigger : MonoBehaviour
             yield return null;
         }
 
-        // Make absolutely sure it's fully visible.
+        // Make absolutely sure it's fully visible
         textColor.a = 1f;
         hordeText.color = textColor;
 
-        // -----------------------------------------------------
-        // STAY VISIBLE
-        // -----------------------------------------------------
-
-        yield return new WaitForSeconds(textDisplayTime);
-
-        // -----------------------------------------------------
-        // FADE OUT
-        // -----------------------------------------------------
+        yield return new WaitForSeconds(textDisplayTime); //wait a few seconds
 
         timer = 0f;
 
-        while (timer < fadeOutDuration)
+        while (timer < fadeOutDuration) //text fades away
         {
             timer += Time.deltaTime;
 
@@ -163,20 +146,17 @@ public class ZombieSpawnTrigger : MonoBehaviour
             yield return null;
         }
 
-        // Completely hide the text.
+        // completely hide the text
         textColor.a = 0f;
         hordeText.color = textColor;
 
         hordeText.gameObject.SetActive(false);
     }
 
-    // =========================================================
-    // ZOMBIE SPAWNING
-    // =========================================================
 
-    private void SpawnZombies()
+    private void SpawnZombies() //script for spawning zombie horde
     {
-        if (zombiePrefab1 == null)
+        if (zombiePrefab1 == null) //for errors
         {
             Debug.LogError(
                 "Zombie Spawn Trigger: Zombie Prefab 1 is not assigned!"
@@ -185,7 +165,7 @@ public class ZombieSpawnTrigger : MonoBehaviour
             return;
         }
 
-        if (zombiePrefab2 == null)
+        if (zombiePrefab2 == null) //for errors
         {
             Debug.LogError(
                 "Zombie Spawn Trigger: Zombie Prefab 2 is not assigned!"
@@ -194,7 +174,7 @@ public class ZombieSpawnTrigger : MonoBehaviour
             return;
         }
 
-        if (spawnPoint == null)
+        if (spawnPoint == null) //for errors
         {
             Debug.LogError(
                 "Zombie Spawn Trigger: Spawn Point is not assigned!"
@@ -205,7 +185,7 @@ public class ZombieSpawnTrigger : MonoBehaviour
 
         for (int i = 0; i < zombieCount; i++)
         {
-            // Randomly select zombie type.
+            // Randomly select zombie type
             GameObject selectedZombie;
 
             if (Random.value < 0.5f)
@@ -217,11 +197,10 @@ public class ZombieSpawnTrigger : MonoBehaviour
                 selectedZombie = zombiePrefab2;
             }
 
-            // Find a random position around the spawn point.
+            // find a random position around the spawn point
             Vector3 randomPosition = GetRandomSpawnPosition();
 
-            // Spawn the zombie.
-            Instantiate(
+            Instantiate( //spawn zombie
                 selectedZombie,
                 randomPosition,
                 spawnPoint.rotation
@@ -234,11 +213,8 @@ public class ZombieSpawnTrigger : MonoBehaviour
         }
     }
 
-    // =========================================================
-    // RANDOM SPAWN POSITION
-    // =========================================================
 
-    private Vector3 GetRandomSpawnPosition()
+    private Vector3 GetRandomSpawnPosition() //randomise spawning position with a circle
     {
         Vector2 randomCircle = Random.insideUnitCircle * spawnRadius;
 
@@ -251,16 +227,13 @@ public class ZombieSpawnTrigger : MonoBehaviour
         return randomPosition;
     }
 
-    // =========================================================
-    // GIZMOS
-    // =========================================================
 
     private void OnDrawGizmosSelected()
     {
         if (spawnPoint == null)
             return;
 
-        // Show the spawn area.
+        // Show the spawn area
         Gizmos.color = Color.red;
 
         Gizmos.DrawWireSphere(
@@ -268,7 +241,7 @@ public class ZombieSpawnTrigger : MonoBehaviour
             spawnRadius
         );
 
-        // Show the center spawn point.
+        // Show the center spawn point
         Gizmos.color = Color.yellow;
 
         Gizmos.DrawWireSphere(
@@ -276,7 +249,7 @@ public class ZombieSpawnTrigger : MonoBehaviour
             0.3f
         );
 
-        // Show the direction zombies will face.
+        // Show the direction zombies will face
         Gizmos.color = Color.blue;
 
         Gizmos.DrawLine(

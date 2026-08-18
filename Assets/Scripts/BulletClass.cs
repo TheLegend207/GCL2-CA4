@@ -10,21 +10,21 @@ public class BulletClass : MonoBehaviour
     {
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other) // when colliding with another object
     {
-        if (other.CompareTag("Zombie"))
+        if (other.CompareTag("Zombie")) // if tag of other object is zombie
         {
-            if (pierce <= 0)
+            if (pierce <= 0) //if piercing is equals or less than 0
             {
-                Destroy(gameObject);
+                Destroy(gameObject); // destroy bullet
                 Debug.Log("Bullet destroyed on zombie.");
             }
-            pierce = -1;
+            pierce = -1; // bullet -1 pierce, for sniper rifle piercing
         }
 
-       if (other.CompareTag("Environment"))
+       if (other.CompareTag("Environment")) // when colliding with environment tage
         {
-            Destroy(gameObject);
+            Destroy(gameObject); // destroy bullet
             Debug.Log("Bullet destroyed on environment.");
         }
     }

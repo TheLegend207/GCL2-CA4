@@ -284,7 +284,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private IEnumerator SpeedBoost()
+    private IEnumerator SpeedBoost() //speed boost given to player when picking up speed boots
     {
         speedBoost = 7;
 

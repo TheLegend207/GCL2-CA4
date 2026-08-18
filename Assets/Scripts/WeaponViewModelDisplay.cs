@@ -19,9 +19,7 @@ public class WeaponViewModelDisplay : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Replaces the currently displayed weapon model.
-    /// </summary>
+//replaces currently displayed weapon model
     public void SetWeaponModel(GameObject weaponModelPrefab)
 {
     Debug.Log(
@@ -37,7 +35,7 @@ public class WeaponViewModelDisplay : MonoBehaviour
         currentWeaponModel = null;
     }
 
-    if (weaponModelPrefab == null)
+    if (weaponModelPrefab == null) //no prefab to use
     {
         Debug.LogError(
             "WeaponViewModelDisplay: Viewmodel prefab is null."
@@ -45,20 +43,21 @@ public class WeaponViewModelDisplay : MonoBehaviour
         return;
     }
 
-    if (weaponHolder == null)
+    if (weaponHolder == null) //no weapon holder to use
     {
         Debug.LogError(
             "WeaponViewModelDisplay: Weapon Holder is not assigned."
         );
         return;
     }
-
+    //replace current weapon with new model
     currentWeaponModel = Instantiate(
         weaponModelPrefab,
         weaponHolder
     );
 
-    currentWeaponModel.transform.localPosition = Vector3.zero;
+        //position the weapon properly
+        currentWeaponModel.transform.localPosition = Vector3.zero;
     currentWeaponModel.transform.localRotation =
         Quaternion.identity;
     currentWeaponModel.transform.localScale =

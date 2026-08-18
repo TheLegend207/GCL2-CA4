@@ -173,7 +173,7 @@ public class HostileAI : MonoBehaviour
             );
     }
 
-    private void UpdateBehaviourState()
+    private void UpdateBehaviourState() //change between patrol and chasing and attacking player
     {
         if (!isPlayerVisible && !isPlayerInRange)
         {
@@ -189,7 +189,7 @@ public class HostileAI : MonoBehaviour
         }
     }
 
-    private void Patrol()
+    private void Patrol() //base patroling ai when not targeting player
     {
         if (navAgent == null ||
             !navAgent.enabled)
@@ -218,7 +218,7 @@ public class HostileAI : MonoBehaviour
         }
     }
 
-    // Find a random point nearby.
+    // Find a random point nearby
     private void FindPatrolPoint()
     {
         if (navAgent == null ||
@@ -665,7 +665,7 @@ public class HostileAI : MonoBehaviour
         yield return new WaitForSeconds(2f);
         slowdown = 0f;
         isOnAttackCooldown = false;
-        Debug.LogWarning("Zombie is shoved");
+        Debug.Log("Zombie is shoved");
     }
 
     private void OnDrawGizmosSelected()

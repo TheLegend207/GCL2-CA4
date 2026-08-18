@@ -19,7 +19,7 @@ public class WeaponPickup : MonoBehaviour
     [Header("Optional name")]
     public string weaponName = "Weapon";
 
-   private void OnTriggerEnter(Collider other)
+   private void OnTriggerEnter(Collider other) //if tag is player, add gun to the list of pick up weapons
 {
     if (!other.CompareTag("Player"))
         return;
@@ -33,7 +33,7 @@ public class WeaponPickup : MonoBehaviour
     }
 }
 
-private void OnTriggerExit(Collider other)
+private void OnTriggerExit(Collider other) //when exiting hitbox, remove gun from list of pick up weapons
 {
     if (!other.CompareTag("Player"))
         return;

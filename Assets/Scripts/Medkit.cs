@@ -39,7 +39,7 @@ public class Medkit : MonoBehaviour
 
     private void Start()
     {
-        if (progressCircle != null)
+        if (progressCircle != null) //if use progress circle is not false, force it to be set false
         {
             progressCircle.fillAmount = 0f;
             progressCircle.gameObject.SetActive(false);
@@ -52,7 +52,7 @@ public class Medkit : MonoBehaviour
             0f,
             45f * Time.deltaTime,
             0f
-        );
+        ); //constant rotation and speed of medkit
 
         if (playerInRange == null)
         {
@@ -61,21 +61,21 @@ public class Medkit : MonoBehaviour
         }
 
         if (playerInRange.currentHealth >=
-            playerInRange.maxHealth)
+            playerInRange.maxHealth) //upper limit for current health is max hp (100hp)
         {
-            ResetHealing();
+            ResetHealing(); // healing function
             return;
         }
 
         if (Input.GetKey(pickupKey))
         {
-            holdTimer += Time.deltaTime;
+            holdTimer += Time.deltaTime; //pressing pick up key "E"
 
             StartHealingSound();
 
             if (progressCircle != null)
             {
-                progressCircle.gameObject.SetActive(true);
+                progressCircle.gameObject.SetActive(true); //show the progress circle
 
                 progressCircle.fillAmount =
                     Mathf.Clamp01(
@@ -85,16 +85,16 @@ public class Medkit : MonoBehaviour
 
             if (holdTimer >= holdTime)
             {
-                UseMedkit();
+                UseMedkit(); //finish using medkit
             }
         }
         else
         {
-            ResetHealing();
+            ResetHealing(); //return to 0 use progress
         }
     }
 
-    private void UseMedkit()
+    private void UseMedkit() //to heal the player
     {
         if (playerInRange == null)
         {
@@ -129,7 +129,7 @@ public class Medkit : MonoBehaviour
         Destroy(gameObject);
     }
 
-    private void StartHealingSound()
+    private void StartHealingSound() //sound that plays when player is healing
     {
         if (healingSoundPlaying)
         {
@@ -149,7 +149,7 @@ public class Medkit : MonoBehaviour
         healingSoundPlaying = true;
     }
 
-    private void StopHealingSound()
+    private void StopHealingSound() // force stop playing healing when play finishes healing
     {
         if (!healingSoundPlaying)
         {
@@ -162,7 +162,7 @@ public class Medkit : MonoBehaviour
         healingSoundPlaying = false;
     }
 
-    private void PlayHealedSound()
+    private void PlayHealedSound() //healing sound
     {
         if (healedSound == null)
         {
@@ -175,7 +175,7 @@ public class Medkit : MonoBehaviour
         );
     }
 
-    private void ResetHealing()
+    private void ResetHealing() //reset healing progress to 0
     {
         holdTimer = 0f;
 
@@ -188,10 +188,10 @@ public class Medkit : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other) //get player component
     {
         PlayerController player =
-            other.GetComponentInParent<PlayerController>();
+            other.GetComponent<PlayerController>();
 
         if (player != null)
         {
@@ -199,10 +199,10 @@ public class Medkit : MonoBehaviour
         }
     }
 
-    private void OnTriggerExit(Collider other)
+    private void OnTriggerExit(Collider other) //when exiting hitbox, reset healing
     {
         PlayerController player =
-            other.GetComponentInParent<PlayerController>();
+            other.GetComponent<PlayerController>();
 
         if (player != null &&
             player == playerInRange)
