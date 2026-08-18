@@ -1,17 +1,17 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
-using System.Collections.Generic;
 using TMPro;
-using Unity.VisualScripting;
-using System;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(AudioSource))]
 public class PlayerController : MonoBehaviour
 {
+    [Header("Player References")]
     public Camera playerCamera;
 
-    // Most of these are pretty self-explainotory
+    [Header("Movement")]
     public float walkSpeed = 15f;
     public float shiftWalkSpeed = 3f;
     public float jumpPower = 7f;
@@ -19,33 +19,54 @@ public class PlayerController : MonoBehaviour
     public float currentSpeed;
     public int speedBoost = 0;
 
+    [Header("Look")]
     public float lookSpeed = 2f;
-    public float lookXLimit = 60f; // Prevent player from rotating camera too far up/down
+    public float lookXLimit = 60f;
+
+    [Header("Crouching")]
     public float defaultHeight = 2f;
     public float crouchHeight = 1f;
     public float crouchSpeed = 1.5f;
+
+    [Header("Health")]
     public int maxHealth = 100;
     public int currentHealth;
 
-    public TMP_Text healthText; // To change health UI
-    public UnityEngine.UI.Image healthBar;
+    [Header("Health UI")]
+    public TMP_Text healthText;
+    public Image healthBar;
 
-    private Vector3 moveDirection = Vector3.zero; // Store player's movements
-    private float rotationX = 0f; // Store how far the player has look up/down
+    [Header("Hurt sound")]
+    public AudioClip HurtSound;
 
-    private CharacterController characterController; // Use character controller for height adjustments
+    [Range(0f, 1f)]
+    public float HurtVolume = 1f;
 
-    private bool canMove = true; // Ref to allow player to move
+    private Vector3 moveDirection = Vector3.zero;
+    private float rotationX = 0f;
+
+    private CharacterController characterController;
+    private AudioSource audioSource;
+
+    private bool canMove = true;
     private bool isDead = false;
-
 
     private void Start()
     {
         speedBoost = 0;
-        characterController = GetComponent<CharacterController>(); // Gets a character controller attached to player
 
-        Cursor.lockState = CursorLockMode.Locked; // Lock cursor in the middle of screen
-        Cursor.visible = false; // Hides it
+        characterController =
+            GetComponent<CharacterController>();
+
+        audioSource =
+            GetComponent<AudioSource>();
+
+        audioSource.playOnAwake = false;
+
+        Cursor.lockState =
+            CursorLockMode.Locked;
+
+        Cursor.visible = false;
 
         currentHealth = maxHealth;
 
@@ -60,47 +81,56 @@ public class PlayerController : MonoBehaviour
 
     private void HandleMovement()
     {
-        // When changing directions, key inputs will also change to that direction
-        float inputVertical = Input.GetAxis("Vertical");
-        float inputHorizontal = Input.GetAxis("Horizontal");
+        float inputVertical =
+            Input.GetAxis("Vertical");
 
-        Vector3 forward = transform.TransformDirection(Vector3.forward);
-        Vector3 right = transform.TransformDirection(Vector3.right);
+        float inputHorizontal =
+            Input.GetAxis("Horizontal");
 
-        Vector3 movement = (forward * inputVertical) + (right * inputHorizontal); // Allow diagonal movement
+        Vector3 forward =
+            transform.TransformDirection(
+                Vector3.forward
+            );
 
-        // Prevent diagonal movement from being faster
+        Vector3 right =
+            transform.TransformDirection(
+                Vector3.right
+            );
+
+        Vector3 movement =
+            (forward * inputVertical) +
+            (right * inputHorizontal);
+
         if (movement.magnitude > 1f)
         {
             movement.Normalize();
         }
 
-        // To determine player movement speed
         if (!canMove)
         {
             currentSpeed = 0f;
         }
         else if (Input.GetKey(KeyCode.LeftControl))
         {
-            // Crouching
-            currentSpeed = crouchSpeed + speedBoost;
+            currentSpeed =
+                crouchSpeed + speedBoost;
         }
         else if (Input.GetKey(KeyCode.LeftShift))
         {
-            // Shift-walk
-            currentSpeed = shiftWalkSpeed + speedBoost;
+            currentSpeed =
+                shiftWalkSpeed + speedBoost;
         }
         else
         {
-            // Normal 
-            currentSpeed = walkSpeed + speedBoost;
+            currentSpeed =
+                walkSpeed + speedBoost;
         }
 
-        // Movement direction and speed of player
-        moveDirection.x = movement.x * currentSpeed;
-        moveDirection.z = movement.z * currentSpeed;
+        moveDirection.x =
+            movement.x * currentSpeed;
 
-        // Jumping
+        moveDirection.z =
+            movement.z * currentSpeed;
 
         if (Input.GetButton("Jump") &&
             canMove &&
@@ -108,8 +138,6 @@ public class PlayerController : MonoBehaviour
         {
             moveDirection.y = jumpPower;
         }
-
-        // Gravity
 
         if (characterController.isGrounded)
         {
@@ -120,53 +148,78 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            moveDirection.y -= gravity * Time.deltaTime;
+            moveDirection.y -=
+                gravity * Time.deltaTime;
         }
 
-        // Crouching
-
-        if (Input.GetKey(KeyCode.LeftControl) && canMove)
+        if (Input.GetKey(KeyCode.LeftControl) &&
+            canMove)
         {
-            characterController.height = Mathf.MoveTowards(
-                characterController.height,
-                crouchHeight,
-                crouchSpeed * Time.deltaTime
-            );
+            characterController.height =
+                Mathf.MoveTowards(
+                    characterController.height,
+                    crouchHeight,
+                    crouchSpeed *
+                    Time.deltaTime
+                );
         }
         else
         {
-            characterController.height = Mathf.MoveTowards(
-                characterController.height,
-                defaultHeight,
-                6f * Time.deltaTime
-            );
+            characterController.height =
+                Mathf.MoveTowards(
+                    characterController.height,
+                    defaultHeight,
+                    6f * Time.deltaTime
+                );
         }
 
-        characterController.Move(moveDirection * Time.deltaTime);
+        characterController.Move(
+            moveDirection * Time.deltaTime
+        );
     }
 
     private void HandleLook()
     {
         if (!canMove)
+        {
             return;
+        }
 
-        // Vertical camera movement
-        rotationX += -Input.GetAxis("Mouse Y") * lookSpeed;
+        rotationX +=
+            -Input.GetAxis("Mouse Y") *
+            lookSpeed;
 
-        // Clamp vertical rotation
-        rotationX = Mathf.Clamp(rotationX, -lookXLimit, lookXLimit);
+        rotationX =
+            Mathf.Clamp(
+                rotationX,
+                -lookXLimit,
+                lookXLimit
+            );
 
-        // Verticle camera rotation
-        playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0f, 0f);
+        playerCamera.transform.localRotation =
+            Quaternion.Euler(
+                rotationX,
+                0f,
+                0f
+            );
 
-        // Horizontal player rotation
-        transform.rotation *= Quaternion.Euler(0f, Input.GetAxis("Mouse X") * lookSpeed, 0f);
+        transform.rotation *=
+            Quaternion.Euler(
+                0f,
+                Input.GetAxis("Mouse X") *
+                lookSpeed,
+                0f
+            );
     }
 
-    // Health
     public void TakeDamage(int damage)
     {
         if (isDead)
+        {
+            return;
+        }
+
+        if (damage <= 0)
         {
             return;
         }
@@ -178,12 +231,26 @@ public class PlayerController : MonoBehaviour
             currentHealth = 0;
         }
 
+        PlayHurtSound();
         UpdateHealthUI();
 
         if (currentHealth <= 0)
         {
             Die();
         }
+    }
+
+    private void PlayHurtSound()
+    {
+        if (HurtSound == null)
+        {
+            return;
+        }
+
+        audioSource.PlayOneShot(
+            HurtSound,
+            HurtVolume
+        );
     }
 
     private void Die()
@@ -195,17 +262,35 @@ public class PlayerController : MonoBehaviour
 
         isDead = true;
         canMove = false;
-        FindFirstObjectByType<LevelManager>().PlayerDied();
+
+        LevelManager levelManager =
+            FindFirstObjectByType<LevelManager>();
+
+        if (levelManager != null)
+        {
+            levelManager.PlayerDied();
+        }
+        else
+        {
+            Debug.LogWarning(
+                "PlayerController: No LevelManager found."
+            );
+        }
     }
 
     private void UpdateHealthUI()
     {
         if (healthText != null)
         {
-            healthText.text = "+" + currentHealth;
+            healthText.text =
+                "+" + currentHealth;
         }
 
-        float healthPercentage = (float)currentHealth / maxHealth;
+        float healthPercentage =
+            maxHealth > 0
+                ? (float)currentHealth / maxHealth
+                : 0f;
+
         Color healthColor;
 
         if (healthPercentage > 0.6f)
@@ -228,28 +313,33 @@ public class PlayerController : MonoBehaviour
 
         if (healthBar != null)
         {
-            healthBar.fillAmount = healthPercentage;
-            healthBar.color = healthColor;
+            healthBar.fillAmount =
+                healthPercentage;
+
+            healthBar.color =
+                healthColor;
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-
         if (other.CompareTag("SpeedBoost"))
         {
-
             StartCoroutine(SpeedBoost());
             Destroy(other.gameObject);
         }
     }
 
-    IEnumerator SpeedBoost()
+    private IEnumerator SpeedBoost()
     {
         speedBoost = 7;
-        print("boost start");
+
+        Debug.Log("Speed boost started.");
+
         yield return new WaitForSeconds(7f);
+
         speedBoost = 0;
-        print("boost end");
+
+        Debug.Log("Speed boost ended.");
     }
 }
