@@ -28,6 +28,10 @@ public class Medkit : MonoBehaviour
 
     private void Update()
     {
+
+        transform.Rotate(0f, 45f * Time.deltaTime, 0f); //medkit will spin
+
+
         // No player is inside the medkit's interaction area.
         if (playerInRange == null)
         {
@@ -76,6 +80,7 @@ public class Medkit : MonoBehaviour
             return;
         }
 
+        // Heal the player.
         playerInRange.Heal(healAmount);
 
         Debug.Log(
@@ -84,7 +89,14 @@ public class Medkit : MonoBehaviour
             " HP."
         );
 
-        // Remove the medkit after use.
+        // Hide the progress UI.
+        if (progressCircle != null)
+        {
+            progressCircle.fillAmount = 0f;
+            progressCircle.gameObject.SetActive(false);
+        }
+
+        // Remove the medkit.
         Destroy(gameObject);
     }
 
