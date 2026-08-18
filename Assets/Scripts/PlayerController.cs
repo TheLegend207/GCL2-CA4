@@ -240,6 +240,30 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    public void Heal(int amount)
+    {
+        if (isDead)
+        {
+            return;
+        }
+
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        currentHealth += amount;
+
+        if (currentHealth > maxHealth)
+        {
+            currentHealth = maxHealth;
+        }
+
+        UpdateHealthUI();
+
+        Debug.Log("Player healed. Current health: " + currentHealth);
+    }
+
     private void PlayHurtSound()
     {
         if (HurtSound == null)
@@ -342,4 +366,7 @@ public class PlayerController : MonoBehaviour
 
         Debug.Log("Speed boost ended.");
     }
+
+
+
 }
