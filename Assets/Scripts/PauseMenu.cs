@@ -18,11 +18,11 @@ public class PauseMenu : MonoBehaviour
         {
             if (GameIsPaused)
             {
-                Resume();
+                Resume(); // Play as per normal
             }
             else
             {
-                Pause();
+                Pause(); // Pause UI shows up
             }
         }
     }
@@ -41,11 +41,13 @@ public class PauseMenu : MonoBehaviour
     void Pause()
     {
         pauseMenuUI.SetActive(true);
-        playerController.enabled = false;
-        playerShoot.enabled = false;
+        playerController.enabled = false; // Won't allow player to move
+        playerShoot.enabled = false; // Won't be able to shoot either
+        
+        // Allow cursor to move
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
-        Time.timeScale = 0f;
+        Time.timeScale = 0f; // Freeze game
         GameIsPaused = true;
     }
 

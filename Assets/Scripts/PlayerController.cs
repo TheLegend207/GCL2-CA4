@@ -4,13 +4,11 @@ using System.Collections;
 using TMPro;
 using UnityEngine.UI;
 
-[RequireComponent(typeof(CharacterController))]
-[RequireComponent(typeof(AudioSource))]
 public class PlayerController : MonoBehaviour
 {
     public Camera playerCamera;
 
-    // Player movement and stuff
+    // Self-explainory
     public float walkSpeed = 15f;
     public float shiftWalkSpeed = 3f;
     public float jumpPower = 7f;
@@ -18,7 +16,7 @@ public class PlayerController : MonoBehaviour
     public float currentSpeed;
     public int speedBoost = 0;
     public float lookSpeed = 2f;
-    public float lookXLimit = 60f;
+    public float lookXLimit = 60f; // How far player can rotate up/down
     public float defaultHeight = 2f;
     public float crouchHeight = 1f;
     public float crouchSpeed = 1.5f;
@@ -41,7 +39,7 @@ public class PlayerController : MonoBehaviour
     private CharacterController characterController;
     private AudioSource audioSource;
 
-    private bool canMove = true;
+    private bool canMove = true; 
     private bool isDead = false;
 
 
@@ -62,72 +60,65 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        HandleMovement();
-        HandleLook();
+        Movement();
+        Look();
     }
 
-    private void HandleMovement()
+    // Player movment 
+    private void Movement()
     {
-        float inputVertical =
-            Input.GetAxis("Vertical");
+        // Gets player's "wasd" input 
+        float inputVertical = Input.GetAxis("Vertical");
+        float inputHorizontal = Input.GetAxis("Horizontal");
 
-        float inputHorizontal =
-            Input.GetAxis("Horizontal");
+        // Gets player direction
+        Vector3 forward = transform.TransformDirection(Vector3.forward);
+        Vector3 right = transform.TransformDirection(Vector3.right);
 
-        Vector3 forward =
-            transform.TransformDirection(
-                Vector3.forward
-            );
-
-        Vector3 right =
-            transform.TransformDirection(
-                Vector3.right
-            );
-
-        Vector3 movement =
-            (forward * inputVertical) +
-            (right * inputHorizontal);
-
+        // Allow player to combine verticle and horizontal input
+        Vector3 movement =(forward * inputVertical) + (right * inputHorizontal);
+        
+        // Prevents diagonal movement from being faster than normal movement
         if (movement.magnitude > 1f)
         {
             movement.Normalize();
         }
-
+        
+        // Prevent player from moving
         if (!canMove)
         {
             currentSpeed = 0f;
         }
+
+        // Crouch
         else if (Input.GetKey(KeyCode.LeftControl))
         {
-            currentSpeed =
-                crouchSpeed + speedBoost;
+            currentSpeed = crouchSpeed + speedBoost;
         }
+
+        // Shift-walk
         else if (Input.GetKey(KeyCode.LeftShift))
         {
-            currentSpeed =
-                shiftWalkSpeed + speedBoost;
+            currentSpeed = shiftWalkSpeed + speedBoost;
         }
         else
         {
-            currentSpeed =
-                walkSpeed + speedBoost;
+            currentSpeed = walkSpeed + speedBoost;
         }
 
-        moveDirection.x =
-            movement.x * currentSpeed;
+        // Apply horizontal movement on z and x axis
+        moveDirection.x = movement.x * currentSpeed;
+        moveDirection.z = movement.z * currentSpeed;
 
-        moveDirection.z =
-            movement.z * currentSpeed;
-
-        if (Input.GetButton("Jump") &&
-            canMove &&
-            characterController.isGrounded)
+        // Jump
+        if (Input.GetButton("Jump") && canMove && characterController.isGrounded)
         {
             moveDirection.y = jumpPower;
         }
 
         if (characterController.isGrounded)
         {
+            // Prevent player from continously falling 
             if (moveDirection.y < 0f)
             {
                 moveDirection.y = -2f;
@@ -135,63 +126,48 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            moveDirection.y -=
-                gravity * Time.deltaTime;
+            // Apply gravity over time
+            moveDirection.y -= gravity * Time.deltaTime;
         }
-
-        if (Input.GetKey(KeyCode.LeftControl) &&
-            canMove)
+        
+        // To make camera go down as well when crouching
+        if (Input.GetKey(KeyCode.LeftControl) && canMove)
         {
-            characterController.height =
-                Mathf.MoveTowards(
-                    characterController.height,
-                    crouchHeight,
-                    crouchSpeed *
-                    Time.deltaTime
-                );
+            characterController.height = Mathf.MoveTowards(characterController.height, crouchHeight, crouchSpeed * Time.deltaTime);
         }
         else
         {
-            characterController.height =
-                Mathf.MoveTowards(
-                    characterController.height,
-                    defaultHeight,
-                    6f * Time.deltaTime
-                );
+            characterController.height = Mathf.MoveTowards(characterController.height, defaultHeight, 6f * Time.deltaTime);
         }
-
-        characterController.Move(
-            moveDirection * Time.deltaTime
-        );
+        characterController.Move(moveDirection * Time.deltaTime);
     }
 
-    private void HandleLook()
+    //
+    private void Look()
     {
+        // Stops function when player cannot move
         if (!canMove)
         {
             return;
         }
 
-        rotationX += -Input.GetAxis("Mouse Y") * lookSpeed;
-        rotationX = Mathf.Clamp(rotationX, -lookXLimit, lookXLimit);
-        playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0f, 0f);
-        transform.rotation *= Quaternion.Euler(0f, Input.GetAxis("Mouse X") * lookSpeed, 0f);
+        rotationX += -Input.GetAxis("Mouse Y") * lookSpeed; // Change verticle movement based on mouse speed
+        rotationX = Mathf.Clamp(rotationX, -lookXLimit, lookXLimit); // Prevenets player from looking too far up/down
+        playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0f, 0f); // Rotate camera up/down
+        transform.rotation *= Quaternion.Euler(0f, Input.GetAxis("Mouse X") * lookSpeed, 0f); // Rotate player left/right
     }
 
     public void TakeDamage(int damage)
     {
+        // Nothing happens if player is alr dead
         if (isDead)
         {
             return;
         }
 
-        if (damage <= 0)
-        {
-            return;
-        }
-
-        currentHealth -= damage;
-
+        currentHealth -= damage; // Subtract damage from player's current health
+        
+        // Prevent health from going beyond 0
         if (currentHealth < 0)
         {
             currentHealth = 0;
@@ -199,10 +175,11 @@ public class PlayerController : MonoBehaviour
 
         PlayHurtSound();
         UpdateHealthUI();
-
+        
+        // Kill player when health becomes 0
         if (currentHealth <= 0)
         {
-            Die();
+            Die(); 
         }
     }
 
@@ -243,6 +220,7 @@ public class PlayerController : MonoBehaviour
 
     private void Die()
     {
+        // Prevent player from dying multiple times by taking damage frequently after death
         if (isDead)
         {
             return;
@@ -254,7 +232,7 @@ public class PlayerController : MonoBehaviour
         LevelManager levelManager = FindFirstObjectByType<LevelManager>();
         if (levelManager != null)
         {
-            levelManager.PlayerDied();
+            levelManager.PlayerDied(); // Tell level manager that player died
         }
     }
 
@@ -262,10 +240,14 @@ public class PlayerController : MonoBehaviour
     {
         if (healthText != null)
         {
-            healthText.text = "+" + currentHealth;
+            healthText.text = "+" + currentHealth; // Display current health with a + sign
         }
-
+        
+        // Convert health into percentage 
+        // Change color for health bar and number 
         float healthPercentage = (float)currentHealth / maxHealth;
+
+        // Store color that health UI should use
         Color healthColor;
 
         if (healthPercentage > 0.6f)
@@ -283,16 +265,13 @@ public class PlayerController : MonoBehaviour
 
         if (healthText != null)
         {
-            healthText.color = healthColor;
+            healthText.color = healthColor; // Change number color
         }
 
         if (healthBar != null)
         {
-            healthBar.fillAmount =
-                healthPercentage;
-
-            healthBar.color =
-                healthColor;
+            healthBar.fillAmount = healthPercentage; // Change how full health bar is
+            healthBar.color = healthColor; // Change bar color
         }
     }
 

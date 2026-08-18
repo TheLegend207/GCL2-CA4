@@ -71,6 +71,6 @@ public class LevelManager : MonoBehaviour
         deathText.color = textColor;
 
         yield return new WaitForSeconds(2f);
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name); // Restart the current level
     }
 }
