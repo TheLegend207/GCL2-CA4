@@ -8,31 +8,24 @@ using UnityEngine.UI;
 [RequireComponent(typeof(AudioSource))]
 public class PlayerController : MonoBehaviour
 {
-    [Header("Player References")]
     public Camera playerCamera;
 
-    [Header("Movement")]
+    // Player movement and stuff
     public float walkSpeed = 15f;
     public float shiftWalkSpeed = 3f;
     public float jumpPower = 7f;
     public float gravity = 15f;
     public float currentSpeed;
     public int speedBoost = 0;
-
-    [Header("Look")]
     public float lookSpeed = 2f;
     public float lookXLimit = 60f;
-
-    [Header("Crouching")]
     public float defaultHeight = 2f;
     public float crouchHeight = 1f;
     public float crouchSpeed = 1.5f;
 
-    [Header("Health")]
+    // Health related stuff
     public int maxHealth = 100;
     public int currentHealth;
-
-    [Header("Health UI")]
     public TMP_Text healthText;
     public Image healthBar;
 
@@ -54,22 +47,15 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
+        currentHealth = maxHealth;
         speedBoost = 0;
+        characterController = GetComponent<CharacterController>();
 
-        characterController =
-            GetComponent<CharacterController>();
-
-        audioSource =
-            GetComponent<AudioSource>();
-
+        audioSource = GetComponent<AudioSource>();
         audioSource.playOnAwake = false;
 
-        Cursor.lockState =
-            CursorLockMode.Locked;
-
+        Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
-
-        currentHealth = maxHealth;
 
         UpdateHealthUI();
     }
@@ -186,34 +172,10 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        rotationX +=
-            -Input.GetAxis("Mouse Y") *
-            lookSpeed;
-
-        rotationX =
-            Mathf.Clamp(
-                rotationX,
-                -lookXLimit,
-                lookXLimit
-            );
-
-        playerCamera.transform.localRotation =
-            Quaternion.Euler(
-                rotationX,
-                0f,
-                0f
-            );
-
-
-
-
-        transform.rotation *=
-            Quaternion.Euler(
-                0f,
-                Input.GetAxis("Mouse X") *
-                lookSpeed,
-                0f
-            );
+        rotationX += -Input.GetAxis("Mouse Y") * lookSpeed;
+        rotationX = Mathf.Clamp(rotationX, -lookXLimit, lookXLimit);
+        playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0f, 0f);
+        transform.rotation *= Quaternion.Euler(0f, Input.GetAxis("Mouse X") * lookSpeed, 0f);
     }
 
     public void TakeDamage(int damage)
@@ -264,8 +226,6 @@ public class PlayerController : MonoBehaviour
         }
 
         UpdateHealthUI();
-
-        Debug.Log("Player healed. Current health: " + currentHealth);
     }
 
     private void PlayHurtSound()
@@ -291,18 +251,10 @@ public class PlayerController : MonoBehaviour
         isDead = true;
         canMove = false;
 
-        LevelManager levelManager =
-            FindFirstObjectByType<LevelManager>();
-
+        LevelManager levelManager = FindFirstObjectByType<LevelManager>();
         if (levelManager != null)
         {
             levelManager.PlayerDied();
-        }
-        else
-        {
-            Debug.LogWarning(
-                "PlayerController: No LevelManager found."
-            );
         }
     }
 
@@ -310,15 +262,10 @@ public class PlayerController : MonoBehaviour
     {
         if (healthText != null)
         {
-            healthText.text =
-                "+" + currentHealth;
+            healthText.text = "+" + currentHealth;
         }
 
-        float healthPercentage =
-            maxHealth > 0
-                ? (float)currentHealth / maxHealth
-                : 0f;
-
+        float healthPercentage = (float)currentHealth / maxHealth;
         Color healthColor;
 
         if (healthPercentage > 0.6f)
