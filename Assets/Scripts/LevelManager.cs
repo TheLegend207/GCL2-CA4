@@ -10,6 +10,7 @@ public class LevelManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        // Make both text and black screen invisible until when player died
         Color textColor = deathText.color;
         textColor.a = 0f;
         deathText.color = textColor;
@@ -23,7 +24,8 @@ public class LevelManager : MonoBehaviour
     {
         StartCoroutine(RestartGame());
     }
-
+    
+    // Coroutine is just screen fading to black and the text of "you died" fading in before restarting level
     private IEnumerator RestartGame()
     {
         // Make sure the death text starts invisible
@@ -36,14 +38,14 @@ public class LevelManager : MonoBehaviour
         float elapsed = 0f;
 
         Color fadeColor = fadeImage.color;
-
+        
+        // Continue fading until 2 seconds has passed
         while (elapsed < fadeDuration)
         {
             elapsed += Time.deltaTime;
+            float alpha = Mathf.Clamp01(elapsed / fadeDuration); // Convert the elapsed time to a value between 0 and 1
 
-            float alpha = Mathf.Clamp01(elapsed / fadeDuration);
-
-            fadeColor.a = alpha;
+            fadeColor.a = alpha; // Set the fade's image transparancy 
             fadeImage.color = fadeColor;
 
             yield return null;
@@ -59,9 +61,9 @@ public class LevelManager : MonoBehaviour
         while (elapsed < textDuration)
         {
             elapsed += Time.deltaTime;
-            float alpha = Mathf.Clamp01(elapsed / textDuration);
+            float alpha = Mathf.Clamp01(elapsed / textDuration); // Convert the elapsed time to a value between 0 and 1
             
-            textColor.a = alpha;
+            textColor.a = alpha; // Set the fade in text's transparancy 
             deathText.color = textColor;
 
             yield return null;
@@ -70,7 +72,7 @@ public class LevelManager : MonoBehaviour
         textColor.a = 1f;
         deathText.color = textColor;
 
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(2f); 
         SceneManager.LoadScene(SceneManager.GetActiveScene().name); // Restart the current level
     }
 }
