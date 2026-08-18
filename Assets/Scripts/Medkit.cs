@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(AudioSource))]
 public class Medkit : MonoBehaviour
 {
     [Header("Interaction")]
@@ -13,12 +14,31 @@ public class Medkit : MonoBehaviour
     [Header("Progress UI")]
     public Image progressCircle;
 
+    [Header("Healing sounds")]
+    public AudioClip healingHoldSound;
+
+    [Range(0f, 1f)]
+    public float healingHoldVolume = 1f;
+
+    public AudioClip healedSound;
+
+    [Range(0f, 1f)]
+    public float healedVolume = 1f;
+
     private PlayerController playerInRange;
     private float holdTimer = 0f;
+    private AudioSource audioSource;
+    private bool healingSoundPlaying;
+
+    private void Awake()
+    {
+        audioSource = GetComponent<AudioSource>();
+        audioSource.playOnAwake = false;
+        audioSource.loop = false;
+    }
 
     private void Start()
     {
-        // Hide the progress circle when the game starts.
         if (progressCircle != null)
         {
             progressCircle.fillAmount = 0f;
@@ -28,32 +48,41 @@ public class Medkit : MonoBehaviour
 
     private void Update()
     {
+        transform.Rotate(
+            0f,
+            45f * Time.deltaTime,
+            0f
+        );
 
-        transform.Rotate(0f, 45f * Time.deltaTime, 0f); //medkit will spin
-
-
-        // No player is inside the medkit's interaction area.
         if (playerInRange == null)
         {
             ResetHealing();
             return;
         }
 
-        // Player is holding E.
+        if (playerInRange.currentHealth >=
+            playerInRange.maxHealth)
+        {
+            ResetHealing();
+            return;
+        }
+
         if (Input.GetKey(pickupKey))
         {
             holdTimer += Time.deltaTime;
 
-            // Show the progress circle.
+            StartHealingSound();
+
             if (progressCircle != null)
             {
                 progressCircle.gameObject.SetActive(true);
 
                 progressCircle.fillAmount =
-                    Mathf.Clamp01(holdTimer / holdTime);
+                    Mathf.Clamp01(
+                        holdTimer / holdTime
+                    );
             }
 
-            // Hold E for the required amount of time.
             if (holdTimer >= holdTime)
             {
                 UseMedkit();
@@ -61,7 +90,6 @@ public class Medkit : MonoBehaviour
         }
         else
         {
-            // Player released E before finishing.
             ResetHealing();
         }
     }
@@ -73,15 +101,18 @@ public class Medkit : MonoBehaviour
             return;
         }
 
-        // Don't use the medkit if health is already full.
-        if (playerInRange.currentHealth >= playerInRange.maxHealth)
+        if (playerInRange.currentHealth >=
+            playerInRange.maxHealth)
         {
             ResetHealing();
             return;
         }
 
-        // Heal the player.
+        StopHealingSound();
+
         playerInRange.Heal(healAmount);
+
+        PlayHealedSound();
 
         Debug.Log(
             "Medkit used. Player healed for " +
@@ -89,20 +120,66 @@ public class Medkit : MonoBehaviour
             " HP."
         );
 
-        // Hide the progress UI.
         if (progressCircle != null)
         {
             progressCircle.fillAmount = 0f;
             progressCircle.gameObject.SetActive(false);
         }
 
-        // Remove the medkit.
         Destroy(gameObject);
+    }
+
+    private void StartHealingSound()
+    {
+        if (healingSoundPlaying)
+        {
+            return;
+        }
+
+        if (healingHoldSound == null)
+        {
+            return;
+        }
+
+        audioSource.clip = healingHoldSound;
+        audioSource.loop = true;
+        audioSource.volume = healingHoldVolume;
+        audioSource.Play();
+
+        healingSoundPlaying = true;
+    }
+
+    private void StopHealingSound()
+    {
+        if (!healingSoundPlaying)
+        {
+            return;
+        }
+
+        audioSource.Stop();
+        audioSource.clip = null;
+        audioSource.loop = false;
+        healingSoundPlaying = false;
+    }
+
+    private void PlayHealedSound()
+    {
+        if (healedSound == null)
+        {
+            return;
+        }
+
+        audioSource.PlayOneShot(
+            healedSound,
+            healedVolume
+        );
     }
 
     private void ResetHealing()
     {
         holdTimer = 0f;
+
+        StopHealingSound();
 
         if (progressCircle != null)
         {
@@ -114,7 +191,7 @@ public class Medkit : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         PlayerController player =
-            other.GetComponent<PlayerController>();
+            other.GetComponentInParent<PlayerController>();
 
         if (player != null)
         {
@@ -125,13 +202,12 @@ public class Medkit : MonoBehaviour
     private void OnTriggerExit(Collider other)
     {
         PlayerController player =
-            other.GetComponent<PlayerController>();
+            other.GetComponentInParent<PlayerController>();
 
         if (player != null &&
             player == playerInRange)
         {
             playerInRange = null;
-
             ResetHealing();
         }
     }

@@ -27,8 +27,11 @@ public class PlayerShoot : MonoBehaviour
     public Transform shootPoint;
     public float projectileSpeed = 50f;
 
-    [Header("SMG settings")]
+    [Header("Weapon fire rates")]
+    public float pistolFireDelay = 0.2f;
     public float smgRoundsPerSecond = 12f;
+    public float sniperFireDelay = 1f;
+    public float grenadeFireDelay = 2f;
 
     [Header("Bullet limit per weapon")]
     public int pistolBulletLimit = 12;
@@ -36,18 +39,19 @@ public class PlayerShoot : MonoBehaviour
     public int sniperBulletLimit = 5;
     public int grenadeBulletLimit = 1;
 
-    [Header("Cooldown")]
+    [Header("Cooldown / reload")]
     public float cooldownDuration = 2f;
     public bool cooldownAutomatically = true;
+    public KeyCode reloadKey = KeyCode.R;
 
     [Header("Ammo UI")]
     public TMP_Text ammoText;
 
-    [Tooltip("Example: Ammo: 30 / 120")]
-    public string ammoTextFormat = "Ammo: {0} / {1}";
+    [Tooltip("The first value is bullets remaining. The second value is infinity.")]
+    public string ammoTextFormat = "Ammo: {0} / ∞";
 
-    [Tooltip("Text shown while the weapon is cooling down.")]
-    public string cooldownText = "Cooling Down...";
+    [Tooltip("Text shown while reloading.")]
+    public string cooldownText = "Reloading...";
 
     [Header("Shooting sound")]
     public AudioClip shootingSound;
@@ -61,8 +65,8 @@ public class PlayerShoot : MonoBehaviour
     [Range(0f, 1f)]
     public float cooldownVolume = 1f;
 
-    [Header("grenade sound")]
-    public AudioClip GrenadeSound;
+    [Header("Grenade sound")]
+    public AudioClip grenadeSound;
 
     [Range(0f, 1f)]
     public float grenadeVolume = 1f;
@@ -73,10 +77,9 @@ public class PlayerShoot : MonoBehaviour
     private float nextShotTime;
     private int bulletsFiredSinceCooldown;
     private bool isCoolingDown;
+
     private AudioSource audioSource;
     private Coroutine cooldownCoroutine;
-
-
 
     public bool IsCoolingDown
     {
@@ -90,14 +93,14 @@ public class PlayerShoot : MonoBehaviour
 
     private void Awake()
     {
-        audioSource = GetComponent<AudioSource>();
+        audioSource =
+            GetComponent<AudioSource>();
+
         audioSource.playOnAwake = false;
     }
 
     private void Start()
     {
-        BulletClass Bulletclass = GetComponent<BulletClass>();
-
         if (!pistol &&
             !smg &&
             !sniper &&
@@ -113,6 +116,12 @@ public class PlayerShoot : MonoBehaviour
 
     private void Update()
     {
+        // Press R to manually reload/start the cooldown.
+        if (Input.GetKeyDown(reloadKey))
+        {
+            BeginCooldown();
+        }
+
         if (!isCoolingDown)
         {
             if (IsSMG())
@@ -160,7 +169,17 @@ public class PlayerShoot : MonoBehaviour
             return;
         }
 
-        if (bulletprefab == null)
+        if (IsGL())
+        {
+            if (grenadeprefab == null)
+            {
+                Debug.LogWarning(
+                    "PlayerShoot: Grenade Prefab is not assigned."
+                );
+                return;
+            }
+        }
+        else if (bulletprefab == null)
         {
             Debug.LogWarning(
                 "PlayerShoot: Bullet Prefab is not assigned."
@@ -185,7 +204,7 @@ public class PlayerShoot : MonoBehaviour
             BeginCooldown();
             return;
         }
-        // ADDED HERE TO BELOW LINE -----------------------------
+
         UpdateBullet();
 
         if (IsGL())
@@ -196,7 +215,6 @@ public class PlayerShoot : MonoBehaviour
         {
             PlayShootingSound();
         }
-        // -----------------------------------
 
         bulletsFiredSinceCooldown++;
 
@@ -204,32 +222,10 @@ public class PlayerShoot : MonoBehaviour
         {
             ReduceCurrentAmmo();
         }
-        if (IsSMG())
-        {
-            if (smgRoundsPerSecond <= 0f)
-            {
-                smgRoundsPerSecond = 1f;
-            }
 
-            nextShotTime =
-                Time.time + (1f / smgRoundsPerSecond);
-        }
-        // ADDED HERE TO BELOW LINE------------------------------
-        if (IsPistol())
-        {
-            nextShotTime =
-                Time.time + 0.2f;
-        }
-        if (IsSniper())
-        {
-            nextShotTime =
-               Time.time + 1f;
-        }
-        if (IsGL())
-        {
-            nextShotTime =
-                Time.time + 2f;
-        }
+        SetNextShotTime();
+
+        UpdateAmmoCounter();
         UpdateAmmoUI();
 
         if (ReachedBulletLimit() &&
@@ -244,43 +240,80 @@ public class PlayerShoot : MonoBehaviour
         if (IsSMG())
         {
             projectileSpeed = 50f;
-            bulletclass.pierce = 0;
-            bulletclass.damage = 20;
-            bulletclass.slow = 1.5f;
-            ShootBullet();
 
-        }
-        if (IsPistol())
-        {
-            projectileSpeed = 50f;
-            bulletclass.pierce = 0;
-            bulletclass.damage = 40;
-            bulletclass.slow = 3f;
+            ConfigureBullet(
+                damage: 20,
+                pierce: 0,
+                slow: 1.5f
+            );
+
             ShootBullet();
         }
-        if (IsSniper())
+        else if (IsPistol())
         {
             projectileSpeed = 50f;
-            bulletclass.pierce = 2;
-            bulletclass.damage = 100;
-            bulletclass.slow = 2f;
+
+            ConfigureBullet(
+                damage: 40,
+                pierce: 0,
+                slow: 3f
+            );
+
             ShootBullet();
         }
-        if (IsGL())
+        else if (IsSniper())
+        {
+            projectileSpeed = 50f;
+
+            ConfigureBullet(
+                damage: 100,
+                pierce: 2,
+                slow: 2f
+            );
+
+            ShootBullet();
+        }
+        else if (IsGL())
         {
             projectileSpeed = 40f;
-            bulletclass.damage = 100;
-            bulletclass.pierce = 0;
+
+            ConfigureBullet(
+                damage: 100,
+                pierce: 0,
+                slow: 0f
+            );
+
             ShootGrenade();
         }
-
     }
+
+    private void ConfigureBullet(
+        int damage,
+        int pierce,
+        float slow
+    )
+    {
+        if (bulletclass == null)
+        {
+            Debug.LogWarning(
+                "PlayerShoot: BulletClass is not assigned."
+            );
+            return;
+        }
+
+        bulletclass.damage = damage;
+        bulletclass.pierce = pierce;
+        bulletclass.slow = slow;
+    }
+
     private void ShootBullet()
     {
-        GameObject projectile = Instantiate(
-            bulletprefab,
-            shootPoint.position,
-            shootPoint.rotation);
+        GameObject projectile =
+            Instantiate(
+                bulletprefab,
+                shootPoint.position,
+                shootPoint.rotation
+            );
 
         Rigidbody rb =
             projectile.GetComponent<Rigidbody>();
@@ -288,7 +321,8 @@ public class PlayerShoot : MonoBehaviour
         if (rb != null)
         {
             rb.linearVelocity =
-                shootPoint.forward * projectileSpeed;
+                shootPoint.forward *
+                projectileSpeed;
         }
         else
         {
@@ -296,22 +330,25 @@ public class PlayerShoot : MonoBehaviour
                 "PlayerShoot: Bullet prefab has no Rigidbody."
             );
         }
-
     }
+
     private void ShootGrenade()
     {
-        GameObject projectile2 = Instantiate(
-    grenadeprefab,
-    shootPoint.position,
-    shootPoint.rotation);
+        GameObject projectile =
+            Instantiate(
+                grenadeprefab,
+                shootPoint.position,
+                shootPoint.rotation
+            );
 
         Rigidbody rb =
-            projectile2.GetComponent<Rigidbody>();
+            projectile.GetComponent<Rigidbody>();
 
         if (rb != null)
         {
             rb.linearVelocity =
-                shootPoint.forward * projectileSpeed;
+                shootPoint.forward *
+                projectileSpeed;
         }
         else
         {
@@ -320,7 +357,41 @@ public class PlayerShoot : MonoBehaviour
             );
         }
     }
-    // ---------------------------------------------------------------------------------
+
+    private void SetNextShotTime()
+    {
+        if (IsSMG())
+        {
+            float safeRoundsPerSecond =
+                Mathf.Max(
+                    0.01f,
+                    smgRoundsPerSecond
+                );
+
+            nextShotTime =
+                Time.time +
+                (1f / safeRoundsPerSecond);
+        }
+        else if (IsPistol())
+        {
+            nextShotTime =
+                Time.time +
+                pistolFireDelay;
+        }
+        else if (IsSniper())
+        {
+            nextShotTime =
+                Time.time +
+                sniperFireDelay;
+        }
+        else if (IsGL())
+        {
+            nextShotTime =
+                Time.time +
+                grenadeFireDelay;
+        }
+    }
+
     private bool IsSMG()
     {
         return smg &&
@@ -328,6 +399,7 @@ public class PlayerShoot : MonoBehaviour
                !sniper &&
                !grenadelauncher;
     }
+
     private bool IsPistol()
     {
         return pistol &&
@@ -335,6 +407,7 @@ public class PlayerShoot : MonoBehaviour
                !sniper &&
                !grenadelauncher;
     }
+
     private bool IsSniper()
     {
         return sniper &&
@@ -342,6 +415,7 @@ public class PlayerShoot : MonoBehaviour
                !smg &&
                !grenadelauncher;
     }
+
     private bool IsGL()
     {
         return grenadelauncher &&
@@ -349,24 +423,25 @@ public class PlayerShoot : MonoBehaviour
                !sniper &&
                !smg;
     }
+
     private int GetCurrentAmmo()
     {
-        if (pistol)
+        if (IsPistol())
         {
             return pistolammo;
         }
 
-        if (smg)
+        if (IsSMG())
         {
             return smgammo;
         }
 
-        if (sniper)
+        if (IsSniper())
         {
             return sniperammo;
         }
 
-        if (grenadelauncher)
+        if (IsGL())
         {
             return grenadeammo;
         }
@@ -376,22 +451,22 @@ public class PlayerShoot : MonoBehaviour
 
     private int GetCurrentBulletLimit()
     {
-        if (pistol)
+        if (IsPistol())
         {
             return pistolBulletLimit;
         }
 
-        if (smg)
+        if (IsSMG())
         {
             return smgBulletLimit;
         }
 
-        if (sniper)
+        if (IsSniper())
         {
             return sniperBulletLimit;
         }
 
-        if (grenadelauncher)
+        if (IsGL())
         {
             return grenadeBulletLimit;
         }
@@ -409,7 +484,8 @@ public class PlayerShoot : MonoBehaviour
             return false;
         }
 
-        return bulletsFiredSinceCooldown >= currentLimit;
+        return bulletsFiredSinceCooldown >=
+               currentLimit;
     }
 
     private void BeginCooldown()
@@ -421,11 +497,15 @@ public class PlayerShoot : MonoBehaviour
 
         if (cooldownCoroutine != null)
         {
-            StopCoroutine(cooldownCoroutine);
+            StopCoroutine(
+                cooldownCoroutine
+            );
         }
 
         cooldownCoroutine =
-            StartCoroutine(CooldownRoutine());
+            StartCoroutine(
+                CooldownRoutine()
+            );
     }
 
     private IEnumerator CooldownRoutine()
@@ -436,7 +516,10 @@ public class PlayerShoot : MonoBehaviour
         UpdateAmmoUI();
 
         float safeCooldownDuration =
-            Mathf.Max(0f, cooldownDuration);
+            Mathf.Max(
+                0f,
+                cooldownDuration
+            );
 
         yield return new WaitForSeconds(
             safeCooldownDuration
@@ -447,6 +530,7 @@ public class PlayerShoot : MonoBehaviour
         isCoolingDown = false;
         cooldownCoroutine = null;
 
+        UpdateAmmoCounter();
         UpdateAmmoUI();
     }
 
@@ -459,31 +543,44 @@ public class PlayerShoot : MonoBehaviour
 
     private void ReduceCurrentAmmo()
     {
-        if (pistol)
+        if (IsPistol())
         {
             pistolammo =
-                Mathf.Max(0, pistolammo - 1);
+                Mathf.Max(
+                    0,
+                    pistolammo - 1
+                );
         }
-        else if (smg)
+        else if (IsSMG())
         {
             smgammo =
-                Mathf.Max(0, smgammo - 1);
+                Mathf.Max(
+                    0,
+                    smgammo - 1
+                );
         }
-        else if (sniper)
+        else if (IsSniper())
         {
             sniperammo =
-                Mathf.Max(0, sniperammo - 1);
+                Mathf.Max(
+                    0,
+                    sniperammo - 1
+                );
         }
-        else if (grenadelauncher)
+        else if (IsGL())
         {
             grenadeammo =
-                Mathf.Max(0, grenadeammo - 1);
+                Mathf.Max(
+                    0,
+                    grenadeammo - 1
+                );
         }
     }
 
     private void UpdateAmmoCounter()
     {
-        ammocounter = GetCurrentAmmo();
+        ammocounter =
+            GetCurrentAmmo();
     }
 
     private void UpdateAmmoUI()
@@ -495,30 +592,23 @@ public class PlayerShoot : MonoBehaviour
 
         if (isCoolingDown)
         {
-            ammoText.text = cooldownText;
-            return;
-        }
-
-        int currentAmmo = GetCurrentAmmo();
-        int currentLimit = GetCurrentBulletLimit();
-
-        if (infiniteAmmo)
-        {
             ammoText.text =
-                string.Format(
-                    ammoTextFormat,
-                    "∞",
-                    currentLimit
-                );
+                cooldownText;
 
             return;
         }
+
+        int bulletsRemaining =
+            Mathf.Max(
+                0,
+                GetCurrentBulletLimit() -
+                bulletsFiredSinceCooldown
+            );
 
         ammoText.text =
             string.Format(
                 ammoTextFormat,
-                currentAmmo,
-                currentLimit
+                bulletsRemaining
             );
     }
 
@@ -537,14 +627,14 @@ public class PlayerShoot : MonoBehaviour
 
     private void PlayGrenadeSound()
     {
-        if (GrenadeSound == null)
+        if (grenadeSound == null)
         {
             return;
         }
 
         audioSource.PlayOneShot(
-            shootingSound,
-            shootingVolume
+            grenadeSound,
+            grenadeVolume
         );
     }
 
@@ -570,15 +660,22 @@ public class PlayerShoot : MonoBehaviour
         float newProjectileSpeed
     )
     {
-        pistol = newPistol;
-        smg = newSmg;
-        sniper = newSniper;
+        pistol =
+            newPistol;
+
+        smg =
+            newSmg;
+
+        sniper =
+            newSniper;
+
         grenadelauncher =
             newGrenadeLauncher;
 
         if (newBulletPrefab != null)
         {
-            bulletprefab = newBulletPrefab;
+            bulletprefab =
+                newBulletPrefab;
         }
 
         if (newProjectileSpeed > 0f)
@@ -589,7 +686,10 @@ public class PlayerShoot : MonoBehaviour
 
         if (cooldownCoroutine != null)
         {
-            StopCoroutine(cooldownCoroutine);
+            StopCoroutine(
+                cooldownCoroutine
+            );
+
             cooldownCoroutine = null;
         }
 
